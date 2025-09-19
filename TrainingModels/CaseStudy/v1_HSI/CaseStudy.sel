@@ -1,0 +1,20 @@
+Seles Model
+Time Units: Year Century 100 1
+Landscape Events:
+   GoshawkHSI.lse // Habitat Suitability Index (v1: simple; static)
+
+Spatial Constants:
+   StudyArea
+   StandAge
+   Spp1
+
+Global Constants:
+   ///////////////////////////
+   // General constants and parameters
+   CellWidth = CELL WIDTH(StudyArea)
+   HaPerCell = (CellWidth^2) / 10000
+
+Spatial Variables:
+   NestAreaHSI[0, 100]
+   NestAreaHSIClass[3]
+

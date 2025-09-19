@@ -1,0 +1,41 @@
+<PAMDataset>
+  <PAMRasterBand band="1">
+    <CategoryNames>
+      <Category></Category>
+      <Category>AC</Category>
+      <Category>AT</Category>
+      <Category>BL</Category>
+      <Category>HM</Category>
+      <Category>PL</Category>
+      <Category>SW</Category>
+    </CategoryNames>
+    <GDALRasterAttributeTable>
+      <FieldDefn index="0">
+        <Name>Categories</Name>
+        <Type>2</Type>
+        <Usage>2</Usage>
+      </FieldDefn>
+      <Row index="0">
+        <F></F>
+      </Row>
+      <Row index="1">
+        <F>AC</F>
+      </Row>
+      <Row index="2">
+        <F>AT</F>
+      </Row>
+      <Row index="3">
+        <F>BL</F>
+      </Row>
+      <Row index="4">
+        <F>HM</F>
+      </Row>
+      <Row index="5">
+        <F>PL</F>
+      </Row>
+      <Row index="6">
+        <F>SW</F>
+      </Row>
+    </GDALRasterAttributeTable>
+  </PAMRasterBand>
+</PAMDataset>

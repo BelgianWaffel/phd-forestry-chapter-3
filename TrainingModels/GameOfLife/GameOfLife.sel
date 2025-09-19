@@ -1,0 +1,15 @@
+Seles Model
+Model Size: 200, 200
+Time Units: na Step 1
+
+Landscape Events:
+  GameOfLife.lse
+
+Spatial Variables:
+  CellState[1]
+  PrevCellState[1]
+
+Global Variables:
+  pInitial = 0.05
+
+Output Frequency: 1

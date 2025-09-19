@@ -1,0 +1,85 @@
+<PAMDataset>
+  <PAMRasterBand band="1">
+    <CategoryNames>
+      <Category>na</Category>
+      <Category> Alpine</Category>
+      <Category> AlpineForest</Category>
+      <Category> Brush</Category>
+      <Category> Burn</Category>
+      <Category> Clearing</Category>
+      <Category> Clay</Category>
+      <Category> Glacier</Category>
+      <Category> Gravel</Category>
+      <Category> Lake</Category>
+      <Category> Marsh</Category>
+      <Category> NonProd</Category>
+      <Category> NonTyped</Category>
+      <Category> OpenRange</Category>
+      <Category> Roads</Category>
+      <Category> River</Category>
+      <Category> Streams</Category>
+      <Category> Unknown</Category>
+    </CategoryNames>
+    <GDALRasterAttributeTable>
+      <FieldDefn index="0">
+        <Name>Categories</Name>
+        <Type>2</Type>
+        <Usage>2</Usage>
+      </FieldDefn>
+      <Row index="0">
+        <F>na</F>
+      </Row>
+      <Row index="1">
+        <F> Alpine</F>
+      </Row>
+      <Row index="2">
+        <F> AlpineForest</F>
+      </Row>
+      <Row index="3">
+        <F> Brush</F>
+      </Row>
+      <Row index="4">
+        <F> Burn</F>
+      </Row>
+      <Row index="5">
+        <F> Clearing</F>
+      </Row>
+      <Row index="6">
+        <F> Clay</F>
+      </Row>
+      <Row index="7">
+        <F> Glacier</F>
+      </Row>
+      <Row index="8">
+        <F> Gravel</F>
+      </Row>
+      <Row index="9">
+        <F> Lake</F>
+      </Row>
+      <Row index="10">
+        <F> Marsh</F>
+      </Row>
+      <Row index="11">
+        <F> NonProd</F>
+      </Row>
+      <Row index="12">
+        <F> NonTyped</F>
+      </Row>
+      <Row index="13">
+        <F> OpenRange</F>
+      </Row>
+      <Row index="14">
+        <F> Roads</F>
+      </Row>
+      <Row index="15">
+        <F> River</F>
+      </Row>
+      <Row index="16">
+        <F> Streams</F>
+      </Row>
+      <Row index="17">
+        <F> Unknown</F>
+      </Row>
+    </GDALRasterAttributeTable>
+  </PAMRasterBand>
+</PAMDataset>

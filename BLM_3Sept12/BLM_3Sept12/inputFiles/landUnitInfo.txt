@@ -1,0 +1,8 @@
+LandUnit	FireCycle	dummy
+Water	0	0
+Wetland	0	1
+PoorDrainage	200	2
+ImperfectDrainage	175	3
+ModerateDrainage	150	4
+GoodDrainage	150	5
+RapidDrainage	150	6

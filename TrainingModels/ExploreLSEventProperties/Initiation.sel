@@ -1,0 +1,21 @@
+Seles Model
+Time Units: Step DecaStep 10 10
+Landscape Events:
+   Initiation.lse
+
+Spatial Constants:
+   StudyArea
+   Elevation
+   Spp1
+
+Global Constants:
+  MaxInstances = 10
+  MaxProbInit = 100
+
+Spatial Variables:
+   EventLoc[MaxInstances]
+   ProbInitSurface[MaxProbInit]
+   Initiations[MaxInstances]
+
+Global Variables:
+  currClusterId = 0

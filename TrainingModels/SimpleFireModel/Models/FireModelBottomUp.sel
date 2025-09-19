@@ -1,0 +1,36 @@
+Seles Model
+
+// Set time units (just use "step" for a time unit, with a kiloStep as 1000 steps)
+Time Units: step kiloStep 1000 10000
+
+// Load landscape events
+Landscape Events:
+  Succession.lse
+  FireBottomUp.lse
+
+// Define maximum time sncce fire as a global constant
+Global Constants:
+  MaxTSF = 200
+
+// Define the study area grid as a spatial constant (becauxe the model doesn't change it)
+Spatial Constants:
+   StudyArea
+
+// Define a single spatial variable for time since fire (age)
+// Uses intialTimeSinceFire for initial conditions, and has a range from 0 to MaxTSF
+Spatial Variables:
+  TimeSinceFire[MaxTSF] <- initialTimeSinceFire
+
+// Define some globl variables
+Global Variables:
+  ForestSize = NUMCELLS // fixed
+
+  // Parameters
+  MeanFiresPerYear = 1
+  probBurn = 0.45
+
+  // Outputs
+  AreaBurned = 0
+  FireCycle = 0
+
+Output Frequency: 1

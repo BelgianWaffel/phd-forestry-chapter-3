@@ -1,0 +1,69 @@
+LSEVENT: SBWSchedule
+
+DEFINITIONS
+   GLOBAL VARIABLE: MeanTimeBetweenOutbreaks, SBWSched[], SBWDur[], LocalProb[]
+   OUTPUT VARIABLE: fSBWSched = SBWSchedule.txt
+ENDDEF
+
+// Calculate SBW outbreak Schedule
+
+INITIALSTATE
+  INITIALSTATE = 1
+
+   SBWSched[0] = 0
+   SBWDur[0] = 0
+   LocalProb[0]=0
+
+   simDuration = 301   
+   Indexx = 1
+   i = 0
+
+   WHILE (i < (simDuration))
+
+      start = IF (Indexx EQ 1) THEN 0.5 ELSE 1
+
+      SBWInterval = CLAMP(FLOOR(NORMAL(MeanTimeBetweenOutbreaks , 5)), 5, 45)
+      SBWDuration = CLAMP(FLOOR(NORMAL(10,3)), 5, 20)  
+
+      tempSched = (SBWSched[Indexx-1] + SBWDur[Indexx-1] + MAX(FLOOR((start*SBWInterval)-(SBWDuration/2)), 5))
+
+      i = tempSched // If tempSched >= 300, quit the loop and not assign another sched in the list.
+
+      IF (tempSched<300) 
+      //   SBWSched[Indexx] = 0
+      //   SBWDur[Indexx] =0
+      //ELSE 
+         SBWSched[Indexx] = tempSched
+         SBWDur[Indexx] = IF ((tempSched + SBWDuration) >= simDuration) THEN (SBWDuration - ((tempSched + SBWDuration)-simDuration)) ELSE SBWDuration
+         LocalProb[Indexx] = (75 > UNIFORM(0, 100))  // Not all outbreaks affect our study region - 75% chance
+         Indexx = Indexx + 1
+      END
+//      Final[Indexx] = IF SBWSched[Indexx] > simDuration THEN 1 ELSE 0
+
+   END
+
+   // Output Schedule
+   // ********************************
+
+   OVER INDEX(1, Indexx-1) //-1
+      DECISION (SBWSched[Index] < simDuration)
+         OUTPUT(fSBWSched)
+            Run: Run
+            OutBreakNum: Index
+            OutBreakStartTime:SBWSched[Index] 
+            OutBreakDuration: SBWDur[Index]
+            OutBreakEndTime: (SBWSched[Index] +SBWDur[Index])
+            OutBreakPeakInterval: (SBWSched[Index] + CEIL(SBWDur[Index]/2) ) - (SBWSched[Index-1] +CEIL(SBWDur[Index-1]/2))
+            LocalOutbreak: LocalProb[Index]
+//            Done: Final[Index]
+         END
+   END
+
+   // ********************************
+
+ENDIS
+
+  
+RETURNTIME = 0
+
+

@@ -1,0 +1,43 @@
+// Landscape event definition for the first version of the Goshawk HSI for the case study model
+LSEVENT: GoshawkHSI
+
+DEFINITIONS
+   // input (static) layers
+   LAYER: StudyArea, StandAge, Spp1
+
+   // output layers
+   LAYER: NestAreaHSI, NestAreaHSIClass
+ENDDEF
+
+
+RETURNTIME = 0 // Run once at time zero, then stop
+
+
+// Initiate in all cells in the study area with a lead species
+EVENTLOCATION
+   REGION WHOLE MAP
+      DECISION (StudyArea > 0) AND (Spp1 > 0)
+ENDEL
+
+
+// Compute HSI v1
+TRANSITIONS
+   TRANSITIONS = TRUE
+
+   // The nest Area HSI v1 is a simple raging based on age classes
+   AgeRating = IF StandAge <= 60 THEN 0
+               ELSE IF StandAge <= 80 THEN 0.1
+               ELSE IF StandAge <= 100  THEN 0.3
+               ELSE IF StandAge <= 120  THEN 0.5
+               ELSE IF StandAge <= 140 THEN 0.8
+               ELSE IF StandAge <= 250 THEN 1
+               ELSE 0.8
+
+   // Calculate HSI and HSI class
+   NestAreaHSI = ROUND(100 * AgeRating)
+   NestAreaHSIClass = IF NestAreaHSI < 25 THEN 0
+                      ELSE IF NestAreaHSI < 50 THEN 1
+                      ELSE IF NestAreaHSI < 75 THEN 2
+                      ELSE 3
+ENDTR
+

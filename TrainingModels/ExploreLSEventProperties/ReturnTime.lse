@@ -1,0 +1,100 @@
+LSEVENT: ReturnTime
+
+DEFINITIONS
+   LAYER: MainLayer
+   GLOBAL CONSTANT: ContextLegend[], Preliminary, Consequent
+   EVENT VARIABLE: currEvent
+ENDDEF
+
+
+// ------------------  INITIAL STATE ---------------------------------
+// The InitialState property specifies the number of event instances
+// to create at the start of a simulation. Except in special cases, this
+// should be one.
+// ------------------------------------------------------------------
+INITIALSTATE
+   // Preliminary assignment expressions are evaluated globally at simulation startup 
+
+   context = Preliminary
+   DISPLAY
+      InitialState: $context {ContextLegend}
+      Time
+   END
+
+   // Main expression must evaluate to an integer representing the number of instances
+    INITIALSTATE = 2
+
+   // Consequent assignment expressions are evaluated globally  (event instance
+   // context) when the first instances are created
+   currEvent = EventId
+
+   context = Consequent
+   DISPLAY
+      InitialState: $context {ContextLegend}
+      Time
+      EventId
+      currEvent
+   END
+ENDIS
+
+// ------------------  RETURN TIME  ---------------------------------
+// The ReturnTime property specifies the interval of time between
+// successive instances of the event on the landscape.  This property
+// represents the time-step for the event, which may be constant or
+// variable (e.g. drawn from a probability distribution). The time
+// units are defined in the dynamic model file (.sel file), but this
+// only influences the SELES user interface. If not specified, by
+// default the event will occur at time zero (start of simulation) and 
+// will not recur.
+// ------------------------------------------------------------------
+RETURNTIME
+   // Preliminary assignment expressions are evaluated globally (event instance
+   // context) when the event instance is created (i.e. at the time the instance
+   // is scheduled) prior to evaluating the main expression.
+
+   // NOTE: by default, initial value for EVENT variables is taken from the creating event
+   timeInc = ROUND(UNIFORM(1,10))
+
+   context = Preliminary
+   DISPLAY
+      ReturnTime: $context {ContextLegend}
+      Time
+      EventId
+      currEvent
+      timeInc
+      TimeToProcess: Time + timeInc
+   END
+
+   // Main expression must evaluate to numeric value representing time units
+   RETURNTIME = timeInc
+
+   // Consequent assignment expressions are evaluated globally  (event instance
+   // context) prior to the event initiating.  This is the first thing to be done 
+   // when the event is taken off the queue.
+   context = Consequent
+   DISPLAY
+      ReturnTime: $context {ContextLegend}
+      Time
+      EventId
+      currEvent
+   END
+ENDRT
+
+
+
+NUMCLUSTERS = 0 // no clusters means no initiation
+
+
+
+ENDEVENT
+   context = Preliminary
+   DISPLAY
+      EndEvent: $context {ContextLegend}
+      Time
+      EventId
+      currEvent
+   END
+
+  ENDEVENT = TRUE
+ENDEE
+

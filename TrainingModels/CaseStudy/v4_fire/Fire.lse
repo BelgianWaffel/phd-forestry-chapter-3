@@ -1,0 +1,115 @@
+// Simple top-own fire event (version 1) for the case study model
+LSEVENT: Fire
+
+DEFINITIONS
+   GLOBAL CONSTANT: HaPerCell, MaxTimeSinceDisturbance
+
+   // Parameters
+   GLOBAL VARIABLE: BaseTimestep // Base Time step (in years)
+   GLOBAL VARIABLE: MeanFiresPerYear, MeanFireSize 
+
+   // Static and input layers
+   LAYER: StudyArea
+
+   LAYER: Spp1
+//   GLOBAL CONSTANT: PL // pine in lead species layer
+
+   // Dynamic layers
+   LAYER: StandAge, Burnt, Ignition   // Show areas that were recently burned
+
+   // Tracking/output global variable
+   GLOBAL VARIABLE: AreaBurned
+
+   CLUSTER VARIABLE: FireExtent
+ENDDEF
+
+
+// Run after succession (schedule the first instance at time 0.5, then each time step thereafter)
+RETURNTIME
+   RETURNTIME = IF Time EQ 0 THEN 0.5 ELSE BaseTimestep
+
+   // Update time since disturbance information
+   // Need to do this here, since Burnt may include non-forested cells
+   OVER REGION WHOLE MAP
+      DECISION Burnt > 0
+      Burnt = MAX(0,Burnt - BaseTimestep)
+   END
+   OVER REGION WHOLE MAP
+      DECISION Ignition > 0
+      Ignition = MAX(0,Ignition - BaseTimestep)
+   END
+
+   // Reset area burned
+   AreaBurned = 0
+ENDRT
+
+
+// Only allow ignitions in forested cells (the "STATIC" keyword means: compute region once on startup and should only be use when the decision is static)
+EVENTLOCATION
+   STATIC REGION WHOLE MAP
+      DECISION (StudyArea > 0) AND (Spp1 > 0)
+ENDEL
+
+
+// Draw the number of clusters from an exponential distribution based on the MeanFirePerYear parameter (multiplied by the time step)
+NUMCLUSTERS = FLOOR(NEGEXP(MeanFiresPerYear * BaseTimestep))
+
+
+PROBINIT
+   PROBINIT = 1 // all cells have equal probability
+
+// Exercise options
+//   PROBINIT = StandAge // increase likelihood with age 
+//   PROBINIT = IF Spp1 EQ PL THEN 100 ELSE 1 // increase likelihood in Pine leading stands
+
+   // For each cluster (opening), select an opening size from a negative exponential distribution
+   FireExtent = ROUND(NEGEXP(MeanFireSize))
+
+   Ignition = MaxTimeSinceDisturbance // Set the location of ignitition to MaxTimeSinceDisturbance (reverse of time since fire - sometimes more convenient for visualizing)
+ENDPI
+
+
+TRANSITIONS
+   // Continue if there is still extent to be burned (top-down) AND if the stand didn't already burn during time step
+   TRANSITIONS = (FireExtent > 0) AND (Burnt < MaxTimeSinceDisturbance)
+
+   IF Spp1 > 0
+      // Decrement the number of cells remaining to burn for this opening
+      // Only do this for forested cells. NonForested cells will just pass on the fire
+      FireExtent = FireExtent - HaPerCell
+      AreaBurned = AreaBurned + HaPerCell
+
+      // Set the stand age to 0 
+      StandAge = 0
+//      Spp1 = PL // Exercise: set leading species to pine
+   END
+
+   // Set the Burnt layer to MaxTimeSinceDisturbance (reverse of time since fire - sometimes more convenient for visualizing)
+   Burnt = MaxTimeSinceDisturbance
+ENDTR
+
+
+// Spread timestep; spread an an equal rate (otherwise time is irrelevant as long as a fire finished spreading before the next time step).
+SPREADTIME = 0.0001
+// Exercise option
+//SPREADTIME = IF PL THEN 0.0000001 ELSE 0.0001 // this would model faster spread (smaller time step) in Pine than other cover types
+
+
+// Spread to the eight neighbours (min of 1 cell and max of 1.5 cells)
+SPREADLOCATION
+   REGION CENTRED(1, 1.5)
+      DECISION (StudyArea > 0) //AND (Burnt < MaxTimeSinceDisturbance)
+ENDSL
+
+
+NUMRECIPIENTS = ROUND(UNIFORM(1,3)) // pick a random number of neighbours to which to spread (between 1 and 3)
+// Exercise option
+//   NUMRECIPIENTS = ROUND(UNIFORM(0.8,2.5))
+
+
+// Exercise option
+//   SPREADPROB = IF Spp1 EQ PL THEN 100 ELSE 1 // increase likelihood of spreading to pine leading by 100x compared to othr cover types
+
+
+
+

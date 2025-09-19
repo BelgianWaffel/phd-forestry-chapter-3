@@ -1,0 +1,113 @@
+Seles Model
+Time Units: Year Century 100 260
+
+Landscape Events:
+   Succession.lse    // Succession (aging) event
+   Fire.lse          // Fire disturbance event
+   Logging.lse       // Management events
+   Roading.lse       // Roading event
+   GoshawkHSI.lse    // Habitat Suitability Index (v3: simplified from v2 for projection)
+   ReportResults.lse // Reporting events
+
+// script variables from the scenario script
+External Variables:
+   $gisData$ = ..\gisData\grids // set default here; may be over-ridden by the scenario script
+
+// Legends (defined constants): pull from GeoTiffs using external script variable for path
+Legends:
+   SppLegend = $gisData$\Spp1.tif
+   ForestStatusLegend = $gisData$\ForestStatus.tif
+
+Spatial Constants:
+   StudyArea
+
+   ///////////////////////////
+   // Landscape physiography
+   Elevation
+   Aspect
+
+   ///////////////////////////
+   // For management
+   ForestStatus
+
+Global Constants:
+   ///////////////////////////
+   // General constants and parameters
+   CellWidth = CELL WIDTH(StudyArea)
+   HaPerCell = (CellWidth^2) / 10000
+   MaxStandAge = 450
+   MaxSpp = ROWS(SppLegend) - 1
+
+   MaxTimeSinceDisturbance = 400
+   MaxInitialDist2Road = MAX(initialDist2Road)
+   MaxHarvestableCells = NUM>2(ForestStatus) // "NUM>x" counts the number of cells with values > x
+   MaxBlockId = 1000
+
+   ///////////////////////////
+   // Goshawk input files
+   SpeciesRatings = ..\inputFiles\GoshawkSpp.txt
+
+
+Spatial Variables:
+   ///////////////////////////
+   // Stand information
+   StandAge[-1,MaxStandAge] <- initialAge
+   Spp1[MaxSpp] <- initialSpp
+   OldForest[1] // range 0 to 1 with initial state of 0
+
+   ///////////////////////////
+   // Goshawk habitat suitability layers
+   NestAreaHSI[0, 100]
+   NestAreaHSIClass[3]
+   HardEdge[1]
+
+   ///////////////////////////
+   // Time since disturbance information
+   Burnt[MaxTimeSinceDisturbance]
+   Logged[MaxTimeSinceDisturbance]
+   BlockId[MaxBlockId]
+
+   ///////////////////////////
+   // Road layers
+   RoadState[2] <- initialRoadState
+   Dist2Road[-1,MaxInitialDist2Road] <- initialDist2Road
+   NearestRoadLoc[NumCells] <= initialNearestRoadLoc
+
+
+Global Variables:
+   ///////////////////////////////////////////////////////////////
+   // General parameters
+   BaseTimestep = 1 // Base Time step (in years)
+
+   // Fire parameters
+   MeanFiresPerYear = 10
+   MeanFireSize = 100
+
+   ///////////////////////////
+   // Logging parameters
+   AreaToCutPerYear = 1000
+   MinHarvestAge = 100
+   GreenupYears = 20
+
+   BlockSizeMin = 50
+   BlockSizeMax = 100
+
+   // Range between start of decline in prob.
+   MinNoEffectDist2Rd = 500
+   MaxDist2Rd = 2000
+
+
+   ///////////////////////////////////////////////////////////////
+   // Tracking
+   AreaBurned = 0     // Area burned in period
+   AreaHarvested = 0  // Area (ha) harvested in period
+
+   TotHSIbyClass[4] = 0
+   AreaOldForest = 0
+
+   // For tracking roads built and stream crossings
+   BlkLandingLoc[MaxHarvestableCells] = 0
+   nBlocks = 0
+   KmRoadsBuilt = 0
+
+Output Frequency: 1

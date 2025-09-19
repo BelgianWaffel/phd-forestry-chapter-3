@@ -1,0 +1,45 @@
+SELES Scenario
+$modelVersion$ = v7_roads
+$gisData$ = ..\gisData\grids
+
+// Load input layers
+StudyArea = $gisData$\studyArea.tif
+Elevation = $gisData$\elevation.tif
+Aspect = $gisData$\aspect.tif
+ForestStatus = $gisData$\ForestStatus.tif
+
+// Load inital conditions for spatial variables
+initialAge = $gisData$\age_prj.tif
+initialSpp = $gisData$\Spp1.tif
+
+initialRoadState = $gisData$\RoadState.tif
+initialDist2Road = $gisData$\Dist2Road.tif
+initialNearestRoadLoc = $gisData$\NearestRoadSegmentLoc.tif
+
+// Set model dimensions and load model
+Model Dimensions: StudyArea
+..\$modelVersion$\CaseStudy.sel
+
+// Set up display
+Minimize Static
+Minimize Initial State
+Tile
+
+// Set any parameter changes
+BaseTimestep = 10 // Base Time step (in years)
+
+// Set harvest parameters
+AreaToCutPerYear = 1000
+MinHarvestAge = 100
+BlockSizeMin = 50
+BlockSizeMax = 100
+
+// Set road access restrictions
+MinNoEffectDist2Rd = 200
+MaxDist2Rd = 2000
+
+// Move to output folder
+cwd ..\oOutput\$modelVersion$
+
+// Run for 300 years
+SimStart 300 

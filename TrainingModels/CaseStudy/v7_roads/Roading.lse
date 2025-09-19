@@ -1,0 +1,100 @@
+// Landscape event definition for road building in the case study model
+LSEVENT: Roading
+
+DEFINITIONS
+   GLOBAL CONSTANT: HaPerCell, CellWidth, MaxInitialDist2Road
+
+   /****************************************/
+   // Parameters
+   GLOBAL VARIABLE: BaseTimestep     // Base Time step (in years)
+
+   // The maximum distance from road for harvesting 
+   GLOBAL VARIABLE: MaxDist2Rd
+
+   // For indicating where roads are to be built (by logging event)
+   GLOBAL VARIABLE: BlkLandingLoc[], nBlocks
+   /****************************************/
+
+   // Static layers
+   LAYER: StudyArea
+
+   // Dynamic layers
+   LAYER: RoadState, Dist2Road, NearestRoadLoc
+ 
+   // Tracking variables
+   GLOBAL VARIABLE: KmRoadsBuilt // For tracking roads built
+
+   // local and active ell varaibles
+   CELL VARIABLE: currNearestRoadLoc
+ENDDEF
+
+
+
+// Run after logging (schedule the first instance at time 0.8, then each time step thereafter)
+RETURNTIME
+   RETURNTIME = IF Time EQ 0 THEN 0.8 ELSE BaseTimestep
+
+   // Reset tracking ariables
+   KmRoadsBuilt = 0
+ENDRT
+
+
+// Start in each "block landing" (list of locations from the logging event)
+EVENTLOCATION
+   REGION LOCATION LIST(BlkLandingLoc, nBlocks)
+ENDEL
+
+
+// Process in sorted order of increasing distance from road
+PROBINIT ORDERED
+   PROBINIT = MaxInitialDist2Road - Dist2Road  + 1 
+
+   // On initiation, set active cell variables
+   currNearestRoadLoc = Location
+
+   // Create a spur as a simple straight line to the closest road location
+   KmRoadsBuilt = KmRoadsBuilt + DISTANCE(Location, NearestRoadLoc) * (CellWidth/1000)
+
+   OVER REGION VECTOR(Location, NearestRoadLoc)
+      DECISION RoadState EQ 0 /// don't change inital road values
+      RoadState = 2
+      NearestRoadLoc = Location // Set nearest road location to current cell
+   END
+ENDPI
+
+
+
+TRANSITIONS
+   // Continue if the new distance from road is shorter than the layer and we haven't reached the max.
+   currDist2Road = ROUND(CellWidth * DISTANCE(Location, currNearestRoadLoc))
+   TRANSITIONS = (currDist2Road < Dist2Road) AND (currDist2Road <= MaxDist2Rd)
+
+   // Update the Distance from Road layer
+   currDist2Road = CellWidth * DISTANCE(Location, currNearestRoadLoc)
+   Dist2Road = ROUND(currDist2Road)
+   NearestRoadLoc = currNearestRoadLoc
+ENDTR
+
+
+// Full spread out from a new spur before initiating the next spru
+SPREADTIME = -1 //0
+
+
+// Spread to cardinal neighbours
+SPREADLOCATION
+   REGION CENTRED(1,1)
+      DECISION (StudyArea > 0)
+ENDSL
+
+
+SPREADPROB
+   // Keep spreading: transitions will stop when the distance to road update is finished
+   SPREADPROB = 1
+
+   // If we are on a new road, refresh nearest road location variable
+   IF (NearestRoadLoc EQ Location) //OR (Logged EQ MaxTimeSinceDisturbance)
+      currNearestRoadLoc =  Location
+   ELSE
+      currNearestRoadLoc =  SOURCE currNearestRoadLoc
+   END
+ENDSP

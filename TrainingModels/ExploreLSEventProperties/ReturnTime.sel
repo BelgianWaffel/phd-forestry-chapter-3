@@ -1,0 +1,11 @@
+Seles Model
+Time Units: Step DecaStep 10 100
+Landscape Events:
+   ReturnTime.lse
+
+Legends:
+   ContextLegend = { 1: Preliminary, 2: Consequent}
+ 
+Spatial Variables:
+   MainLayer[1] <- 0
+

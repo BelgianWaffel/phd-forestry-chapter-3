@@ -1,0 +1,26 @@
+LSEVENT: SimpleAging
+
+DEFINITIONS
+  GLOBAL CONSTANT: MaxTSF
+  LAYER: StudyArea, TimeSinceFire
+ENDDEF
+
+
+// Succession is modelled every step
+RETURNTIME = 1
+
+
+// Initiate in every cell in the study area (no ProbInit or NumClusters means initiate in every cell of the EventLocation)
+EVENTLOCATION
+   REGION WHOLE MAP
+   ? StudyArea > 0
+ENDEL
+
+
+// Aging simply increments TSF by one year!
+TRANSITIONS
+   TRANSITIONS = TRUE
+   TimeSinceFire = MIN(TimeSinceFire + 1, MaxTSF)
+ENDTR
+
+// No spreading
