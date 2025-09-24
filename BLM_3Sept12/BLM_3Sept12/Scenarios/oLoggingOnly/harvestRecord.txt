@@ -1,0 +1,1 @@
+Run	Year	VolHarvested	AreaHarvested	AreaAccessed	MeanVolPerHa	PercentOfTarget	MeanHarvestAge	KmSpursBuilt	KmMainlineBuilt	KmPerM3Hauled	pBb	pC	pE	pMe	pPe	pPg	pS	pUnk	pConif	pMixed	pDecid
