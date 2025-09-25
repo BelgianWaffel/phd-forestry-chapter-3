@@ -1,0 +1,516 @@
+// Landscape event definition for reporting in the 43-02 landscape model
+LSEVENT: REPORT_RESULTS
+
+DEFINITIONS
+   /////////////////////////////////////////////////
+   // INPUT STATE - constants and parameters
+   /////////////////////////////////////////////////
+   GLOBAL CONSTANT: HaPerCell, NumSppCodes, NumSppLeadCodes, NumLandUnits, NumSuccGrps, NumManagementZones
+   GLOBAL CONSTANT: Wetland, PoorDrainage, ImperfectDrainage, ModerateDrainage, GoodDrainage, RapidDrainage
+
+//GLOBAL CONSTANT: NumHost
+
+   LAYER: Species
+   GLOBAL CONSTANT: sBb, sC, sE, sMe, sPe, sPg, sS, sUnk  // lead codes
+
+   GLOBAL VARIABLE: BaseTimestep // Base Time step (in years)
+   GLOBAL VARIABLE: AreaBasedHarvest 
+
+   /////////////////////////////////////////////////
+   // INPUT STATE - dynamic in other events
+   /////////////////////////////////////////////////
+   // Forest stats
+   GLOBAL VARIABLE: LUSize[], SGSize[]
+   GLOBAL VARIABLE: SpeciesByLU[], SpeciesLeadByLU[]  // By SppCode/SppLeadCode, LandUnit
+   GLOBAL VARIABLE: SpeciesBySG[], SpeciesLeadBySG[]  // By SppCode/SppLeadCode, SuccessionGroup
+   //GLOBAL VARIABLE: HostSppByLU[]
+
+   // Harvesting stats
+   GLOBAL VARIABLE: VolHarvestedForYear[], AreaHarvestedForYear[], AreaAccessedForYear, AnnualHarvestTarget, SumOfAgeForYear[]
+
+   // Harvest profile tracked by species
+   GLOBAL VARIABLE: HarvestProfile[]
+
+   GLOBAL VARIABLE: KmRoadsBuilt[], KmRoadsVisited[], KmPerM3Hauled[]
+   GLOBAL CONSTANT: newlyActiveRoad, newlyActiveSpur
+
+
+   GLOBAL CONSTANT: Coniferous, Mixed, Deciduous, MgmtZoneLegend[]
+   GLOBAL VARIABLE: SizeByClass[], SizeByClassZone[]
+   GLOBAL VARIABLE: StandTypeByLU[]
+
+   GLOBAL VARIABLE: VolumeHarvestedByZone[], AreaHarvestedByZone[], AreaAccessedByZone[], AgeHarvestedByZone[], AnnualHarvestTargetByZone[], ForestSizeByZone[]
+   GLOBAL VARIABLE: AreaHarvestedByStandType[]   // Stand Type X LandUnit
+
+   // Amount burned in year in m3 by planning area
+   GLOBAL VARIABLE: AreaBurnedByZone[], AreaBurnedByLandUnit[]
+
+   /////////////////////////////////////////////////
+   // OUTPUT STATE
+   /////////////////////////////////////////////////
+  OUTPUT VARIABLE: HarvestFile = "harvestRecord.txt"
+  OUTPUT VARIABLE: SppLeadCompositionFileLU = "sppLeadCompositionLU.txt"
+  OUTPUT VARIABLE: SppCompositionFileLU = "sppCompositionLU.txt"
+  OUTPUT VARIABLE: SppLeadCompositionFileSG = "sppLeadCompositionSG.txt"
+  OUTPUT VARIABLE: SppCompositionFileSG = "sppCompositionSG.txt"
+
+  OUTPUT VARIABLE: ageClassFile = "AgeClass.txt"
+  OUTPUT VARIABLE: ZoneFile = "MgmtZoneIndicators.txt"
+  OUTPUT VARIABLE: StandTypeFile = "StandType.txt"
+  OUTPUT VARIABLE: SppCompFullMap= "SppCompFullMap.txt"
+  OUTPUT VARIABLE: SppLeadCompFullMap= "SppLeadCompFullMap.txt"
+
+  //MIN OUTPUT VARIABLE: HostCompFullMap= "HostCompFullMap.txt"
+
+
+// Block size class distribution reporting              RT added this section on Andrew's advice
+ GLOBAL CONSTANT: BlockClassSize, NumBlockClasses
+ GLOBAL VARIABLE: BlockSizeDist[], BlockSizeArea[]
+ OUTPUT VARIABLE: BlockDist = BlockSizeDist.txt  
+
+
+
+
+ENDDEF
+
+
+// Evaluate yearly (or by "BaseTimestep" years)
+RETURNTIME
+   // Process at start of following period
+//   RETURNTIME = IF Time EQ 0 THEN 0.002 ELSE BaseTimestep
+   // Process at start of period (after succession and growing stock have set things up)
+   RETURNTIME = IF Time EQ 0 THEN 0.12 ELSE BaseTimestep
+
+
+   tVolHarvestedForYear = VolHarvestedForYear[0] + VolHarvestedForYear[1]
+   tAreaHarvestedForYear = AreaHarvestedForYear[0] + AreaHarvestedForYear[1]
+   MeanVolPerHa = tVolHarvestedForYear/tAreaHarvestedForYear
+
+   KmPerM3Hauled[0] = 0
+   OVER INDEX SEQUENCE(1,NumManagementZones)
+      KmPerM3Hauled[0] = KmPerM3Hauled[0] + KmPerM3Hauled[Index]
+   ENDFN
+
+   OUTPUT RECORD(HarvestFile)
+      DECISION (Time >= 1)
+      Run: Run
+      Year: FLOOR(Time)
+
+      VolHarvested: tVolHarvestedForYear/BaseTimestep
+      AreaHarvested: tAreaHarvestedForYear/BaseTimestep
+      AreaAccessed: AreaAccessedForYear/BaseTimestep
+      MeanVolPerHa: MeanVolPerHa
+      PercentOfTarget: IF AreaBasedHarvest THEN ROUND(100*tAreaHarvestedForYear/AnnualHarvestTarget)
+                       ELSE ROUND(100*tVolHarvestedForYear/AnnualHarvestTarget)
+      MeanHarvestAge: HaPerCell * SumOfAgeForYear / tAreaHarvestedForYear
+
+      KmSpursBuilt: KmRoadsBuilt[newlyActiveSpur]
+      KmMainlineBuilt: KmRoadsBuilt[newlyActiveRoad]
+//      KmMainlineVisited: KmRoadsVisited[newlyActiveRoad]  // not yet computed
+      KmPerM3Hauled: KmPerM3Hauled[0]/(tVolHarvestedForYear/BaseTimestep)
+
+      // Harvest profile tracked
+/*
+      pBb: HarvestProfile[sBb] / tAreaHarvestedForYear
+      pC: HarvestProfile[sC] / tAreaHarvestedForYear
+      pE: HarvestProfile[sE] / tAreaHarvestedForYear
+      pMe: HarvestProfile[sMe] / tAreaHarvestedForYear
+      pPe: HarvestProfile[sPe] / tAreaHarvestedForYear
+      pPg: HarvestProfile[sPg] / tAreaHarvestedForYear
+      pS: HarvestProfile[sS] / tAreaHarvestedForYear
+      pUnk: HarvestProfile[sUnk] / tAreaHarvestedForYear
+*/
+      pBb: HarvestProfile[sBb] / tVolHarvestedForYear
+      pC: HarvestProfile[sC] / tVolHarvestedForYear
+      pE: HarvestProfile[sE] / tVolHarvestedForYear
+      pMe: HarvestProfile[sMe] / tVolHarvestedForYear
+      pPe: HarvestProfile[sPe] / tVolHarvestedForYear
+      pPg: HarvestProfile[sPg] / tVolHarvestedForYear
+      pS: HarvestProfile[sS] / tVolHarvestedForYear
+      pUnk: HarvestProfile[sUnk] / tVolHarvestedForYear
+
+
+      pConif: AreaHarvestedByStandType[Coniferous] / tAreaHarvestedForYear
+      pMixed: AreaHarvestedByStandType[Mixed] / tAreaHarvestedForYear
+      pDecid: AreaHarvestedByStandType[Deciduous] / tAreaHarvestedForYear
+   ENDFN
+
+   // Reset annual harvest stats
+   VolHarvestedForYear[0] = 0
+   VolHarvestedForYear[1] = 0
+   AreaHarvestedForYear[0] = 0
+   AreaHarvestedForYear[1] = 0
+   AreaAccessedForYear = 0
+   SumOfAgeForYear[0] = 0
+   AnnualHarvestTarget = 0
+//   VolumeSalvaged = 0
+
+   KmRoadsBuilt[newlyActiveSpur] = 0
+   KmRoadsBuilt[newlyActiveRoad] = 0
+   KmRoadsVisited[newlyActiveRoad] = 0
+
+   AreaHarvestedByStandType[Coniferous] = 0
+   AreaHarvestedByStandType[Mixed] = 0
+   AreaHarvestedByStandType[Deciduous] = 0
+
+   OVER INDEX SEQUENCE(0,NumSppCodes-1)
+      HarvestProfile[Index] = 0  // By SppCode
+   ENDFN
+
+
+
+
+   OVER INDEX SEQUENCE(0,NumSppCodes-1)
+      spp = Index
+      SpeciesByLU[spp,0] = 0
+      OVER INDEX SEQUENCE(1,NumLandUnits-1)   //Andrew: Change the two over-index loops on land unit to: OVER INDEX SEQUENCE(1,NumLandUnits-1)
+         SpeciesByLU[spp,0] = SpeciesByLU[spp,0] + SpeciesByLU[spp,Index]
+      ENDFN
+      SpeciesBySG[spp,0] = 0
+      OVER INDEX SEQUENCE(1,NumSuccGrps-1)
+         SpeciesBySG[spp,0] = SpeciesBySG[spp,0] + SpeciesBySG[spp,Index]
+      ENDFN
+   ENDFN
+
+   OVER INDEX SEQUENCE(0,NumSppLeadCodes-1)
+      lead = Index
+      SpeciesLeadByLU[lead,0] = 0
+      OVER INDEX SEQUENCE(1,NumLandUnits-1)
+         SpeciesLeadByLU[lead,0] = SpeciesLeadByLU[lead,0] + SpeciesLeadByLU[lead,Index]
+      ENDFN
+      SpeciesLeadBySG[lead,0] = 0
+      OVER INDEX SEQUENCE(1,NumSuccGrps-1)
+         SpeciesLeadBySG[lead,0] = SpeciesLeadBySG[lead,0] + SpeciesLeadBySG[lead,Index]
+      ENDFN
+   ENDFN
+
+  // OVER INDEX SEQUENCE(1,NumHost)
+  //    spp = Index
+   //   HostSppByLU[spp,0] = 0
+  //    OVER INDEX SEQUENCE(1,NumLandUnits-1)
+  //       HostSppByLU[spp,0] = HostSppByLU[spp,0] + HostSppByLU[spp,Index]
+  //    ENDFN
+  // ENDFN
+
+   lup = 0  // global map summary of species composition
+
+      OVER INDEX SEQUENCE(1, NumSppCodes-1)
+         DECISION SpeciesByLU[Index, lup] > 0
+           OUTPUT RECORD (SppCompFullMap)
+            Run: Run
+            Year: FLOOR(Time)
+            Species: $Index {Species}
+            pSpp: SpeciesByLU[Index, lup]/LUSize[lup]
+            Area: SpeciesByLU[Index, lup] * HaPerCell
+         ENDFN
+      ENDFN
+
+/*
+      OUTPUT RECORD(HostCompFullMap)
+         Run: Run
+         Year: FLOOR(Time)
+       
+         NonHost: HostSppByLU[1, lup] * HaPerCell
+         Fir: HostSppByLU[2, lup] * HaPerCell
+         Spruce: HostSppByLU[3, lup] * HaPerCell
+         FirSpruce: HostSppByLU[4, lup] * HaPerCell
+         SpruceFir: HostSppByLU[5, lup] * HaPerCell
+         MixedFirL : HostSppByLU[6, lup] * HaPerCell
+         MixedFirS: HostSppByLU[7, lup] * HaPerCell
+         MixedSpruceL: HostSppByLU[8, lup] * HaPerCell
+         MixedSpruceS: HostSppByLU[9, lup] * HaPerCell
+      ENDFN
+*/
+
+      OUTPUT RECORD(SppLeadCompFullMap)
+         Run: Run
+         Year: FLOOR(Time)
+       
+         Bb: SpeciesLeadByLU[sBb, lup] * HaPerCell
+         C: SpeciesLeadByLU[sC, lup] * HaPerCell
+         E: SpeciesLeadByLU[sE, lup] * HaPerCell
+         Me: SpeciesLeadByLU[sMe, lup] * HaPerCell
+         Pe: SpeciesLeadByLU[sPe, lup] * HaPerCell
+         Pg: SpeciesLeadByLU[sPg, lup] * HaPerCell
+         S: SpeciesLeadByLU[sS, lup] * HaPerCell
+         Unk: SpeciesLeadByLU[sUnk, lup] * HaPerCell
+      ENDFN
+
+
+
+   OVER INDEX SEQUENCE(1,NumLandUnits-1)  // now 1-6, instead of 0-6 b/c we did 0 (whole mpa) above
+      DECISION LUSize[Index] > 0
+      lu = Index
+
+
+     OUTPUT RECORD(SppLeadCompositionFileLU)
+         Run: Run
+         Year: FLOOR(Time)
+         LandUnit: lu
+
+         pBb: SpeciesLeadByLU[sBb, lu]/LUSize[lu]
+         pC: SpeciesLeadByLU[sC, lu]/LUSize[lu]
+         pE: SpeciesLeadByLU[sE, lu]/LUSize[lu]
+         pMe: SpeciesLeadByLU[sMe, lu]/LUSize[lu]
+         pPe: SpeciesLeadByLU[sPe, lu]/LUSize[lu]
+         pPg: SpeciesLeadByLU[sPg, lu]/LUSize[lu]
+         pS: SpeciesLeadByLU[sS, lu]/LUSize[lu]
+         pUnk: SpeciesLeadByLU[sUnk, lu]/LUSize[lu]
+
+         Bb: SpeciesLeadByLU[sBb, lu] * HaPerCell
+         C: SpeciesLeadByLU[sC, lu] * HaPerCell
+         E: SpeciesLeadByLU[sE, lu] * HaPerCell
+         Me: SpeciesLeadByLU[sMe, lu] * HaPerCell
+         Pe: SpeciesLeadByLU[sPe, lu] * HaPerCell
+         Pg: SpeciesLeadByLU[sPg, lu] * HaPerCell
+         S: SpeciesLeadByLU[sS, lu] * HaPerCell
+         Unk: SpeciesLeadByLU[sUnk, lu] * HaPerCell
+      ENDFN
+
+     OVER INDEX SEQUENCE(1, NumSppCodes-1)
+         DECISION SpeciesByLU[Index, lu] > 0
+         OUTPUT RECORD(SppCompositionFileLU)
+            Run: Run
+            Year: FLOOR(Time)
+            LandUnit: lu //Index
+            Species: $Index {Species}
+            pSpp: SpeciesByLU[Index, lu]/LUSize[lu]
+            Area: SpeciesByLU[Index, lu] * HaPerCell
+         ENDFN
+      ENDFN
+   ENDFN
+
+   OVER INDEX SEQUENCE(0,NumSuccGrps-1)
+      DECISION SGSize[Index] > 0
+      sg = Index
+
+      OUTPUT RECORD(SppLeadCompositionFileSG)
+         Run: Run
+         Year: FLOOR(Time)
+         SEGroup: sg
+
+         pBb: SpeciesLeadBySG[sBb, sg]/SGSize[sg]
+         pC: SpeciesLeadBySG[sC, sg]/SGSize[sg]
+         pE: SpeciesLeadBySG[sE, sg]/SGSize[sg]
+         pMe: SpeciesLeadBySG[sMe, sg]/SGSize[sg]
+         pPe: SpeciesLeadBySG[sPe, sg]/SGSize[sg]
+         pPg: SpeciesLeadBySG[sPg, sg]/SGSize[sg]
+         pS: SpeciesLeadBySG[sS, sg]/SGSize[sg]
+         pUnk: SpeciesLeadBySG[sUnk, sg]/SGSize[sg]
+
+         Bb: SpeciesLeadBySG[sBb, sg] * HaPerCell
+         C: SpeciesLeadBySG[sC, sg] * HaPerCell
+         E: SpeciesLeadBySG[sE, sg] * HaPerCell
+         Me: SpeciesLeadBySG[sMe, sg] * HaPerCell
+         Pe: SpeciesLeadBySG[sPe, sg] * HaPerCell
+         Pg: SpeciesLeadBySG[sPg, sg] * HaPerCell
+         S: SpeciesLeadBySG[sS, sg] * HaPerCell
+         Unk: SpeciesLeadBySG[sUnk, sg] * HaPerCell
+      ENDFN
+
+
+      OVER INDEX SEQUENCE(1, NumSuccGrps-1)
+         DECISION SpeciesBySG[Index, sg] > 0
+         OUTPUT RECORD(SppCompositionFileSG)
+            Run: Run
+            Year: FLOOR(Time)
+            SEGroup: Index
+            Species: $Index {Species}
+            pSpp: SpeciesBySG[Index, sg]/SGSize[sg]
+            Area: SpeciesBySG[Index, sg] * HaPerCell
+         ENDFN
+      ENDFN
+   ENDFN
+
+
+  areaBurned = 0
+
+  OVER INDEX SEQUENCE(1,NumManagementZones)
+     DECISION ForestSizeByZone[Index] > 0
+     MeanVolPerHa = VolumeHarvestedByZone[Index]/AreaHarvestedByZone[Index]
+     areaBurned = areaBurned + AreaBurnedByZone[Index]
+
+     OUTPUT RECORD(ZoneFile)
+        Run: Run
+        Year: FLOOR(Time)
+        Zone: $Index {MgmtZoneLegend}
+
+        class1: SizeByClassZone[0, Index] * HaPerCell
+        class2: SizeByClassZone[1, Index] * HaPerCell
+        class3: SizeByClassZone[2, Index] * HaPerCell
+        class4: SizeByClassZone[3, Index] * HaPerCell
+        class5: SizeByClassZone[4, Index] * HaPerCell
+        class6: SizeByClassZone[5, Index] * HaPerCell
+        class7: SizeByClassZone[6, Index] * HaPerCell
+        class8: SizeByClassZone[7, Index] * HaPerCell
+        class9: SizeByClassZone[8, Index] * HaPerCell
+        class10: SizeByClassZone[9, Index] * HaPerCell
+        class11: SizeByClassZone[10, Index] * HaPerCell
+        class12: SizeByClassZone[11, Index] * HaPerCell
+        class13: SizeByClassZone[12, Index] * HaPerCell
+        class14: SizeByClassZone[13, Index] * HaPerCell
+        class15: SizeByClassZone[14, Index] * HaPerCell
+        class16: SizeByClassZone[15, Index] * HaPerCell
+
+        VolHarvested: VolumeHarvestedByZone[Index]/BaseTimestep
+        AreaHarvested: AreaHarvestedByZone[Index]/BaseTimestep
+        AreaAccessed: AreaAccessedByZone[Index]/BaseTimestep
+        MeanVolPerHa: MeanVolPerHa
+        PercentOfTarget: IF AreaBasedHarvest THEN ROUND(100*AreaHarvestedByZone[Index]/AnnualHarvestTargetByZone[Index])
+                         ELSE ROUND(100*VolumeHarvestedByZone[Index]/AnnualHarvestTargetByZone[Index])
+        MeanHarvestAge: IF (AreaHarvestedByZone[Index] EQ 0) THEN 0 ELSE HaPerCell * AgeHarvestedByZone[Index]/AreaHarvestedByZone[Index]
+
+        KmPerM3Hauled: KmPerM3Hauled[Index] / (VolumeHarvestedByZone[Index]/BaseTimestep)
+
+//        KmSpursBuilt: KmRoadsBuilt[newlyActiveSpur]
+//        KmMainlineBuilt: KmRoadsBuilt[newlyActiveRoad]
+//        KmMainlineVisited: KmRoadsVisited[newlyActiveRoad]
+
+        // Harvest profile tracked
+/*        pBb: HarvestProfile[sBb] / VolumeHarvestedByZone[Index]
+        pC: HarvestProfile[sC] / VolumeHarvestedByZone[Index]
+        pE: HarvestProfile[sE] / VolumeHarvestedByZone[Index]
+        pMe: HarvestProfile[sMe] / VolumeHarvestedByZone[Index]
+        pPe: HarvestProfile[sPe] / VolumeHarvestedByZone[Index]
+        pPg: HarvestProfile[sPg] / VolumeHarvestedByZone[Index]
+        pS: HarvestProfile[sS] / VolumeHarvestedByZone[Index]
+        pUnk: HarvestProfile[sUnk] / VolumeHarvestedByZone[Index]
+
+        pConif: AreaHarvestedByStandType[Coniferous]
+        pMixed: AreaHarvestedByStandType[Mixed]
+        pDecid: AreaHarvestedByStandType[Deciduous]
+*/
+        areaBurned: AreaBurnedByZone[Index]
+     ENDFN
+
+     // Reset area burned
+     AreaBurnedByZone[Index] = 0
+
+     VolumeHarvestedByZone[Index] = 0
+     AreaHarvestedByZone[Index] = 0
+     AreaAccessedByZone[Index] = 0
+     AgeHarvestedByZone[Index] = 0
+     KmPerM3Hauled[Index] = 0
+   ENDFN
+
+
+
+  OUTPUT RECORD(ageClassFile)
+     Run: Run
+     Year: FLOOR(Time)
+     class1: SizeByClass[0] * HaPerCell
+     class2: SizeByClass[1] * HaPerCell
+     class3: SizeByClass[2] * HaPerCell
+     class4: SizeByClass[3] * HaPerCell
+     class5: SizeByClass[4] * HaPerCell
+     class6: SizeByClass[5] * HaPerCell
+     class7: SizeByClass[6] * HaPerCell
+     class8: SizeByClass[7] * HaPerCell
+     class9: SizeByClass[8] * HaPerCell
+     class10: SizeByClass[9] * HaPerCell
+     class11: SizeByClass[10] * HaPerCell
+     class12: SizeByClass[11] * HaPerCell
+     class13: SizeByClass[12] * HaPerCell
+     class14: SizeByClass[13] * HaPerCell
+     class15: SizeByClass[14] * HaPerCell
+     class16: SizeByClass[15] * HaPerCell
+     areaBurned: areaBurned
+  ENDFN
+
+  StandTypeByLU[Coniferous, 0] = 0
+  StandTypeByLU[Mixed, 0] = 0
+  StandTypeByLU[Deciduous, 0] = 0
+//  totalAreaHarvestedConif = 0
+
+  OVER INDEX SEQUENCE(1,NumLandUnits-1)
+     // Reset area burned
+     AreaBurnedByLandUnit[Index] = 0
+
+     StandTypeByLU[Coniferous, 0] = StandTypeByLU[Coniferous, 0] + StandTypeByLU[Coniferous,Index]
+     StandTypeByLU[Mixed, 0]= StandTypeByLU[Mixed, 0]+ StandTypeByLU[Mixed,Index]
+     StandTypeByLU[Deciduous, 0] = StandTypeByLU[Deciduous, 0] + StandTypeByLU[Deciduous,Index]
+
+//     totalAreaHarvestedConif = totalAreaHarvestedConif + AreaHarvestedByStandType[1,Index]
+  ENDFN
+
+
+  OUTPUT RECORD(StandTypeFile)
+     Run: Run
+     Year: FLOOR(Time)
+
+     AreaConif: StandTypeByLU[Coniferous, 0] * HaPerCell
+     AreaMixed: StandTypeByLU[Mixed, 0] * HaPerCell
+     AreaDecid: StandTypeByLU[Deciduous, 0] * HaPerCell
+
+     WetlandAreaConif: StandTypeByLU[Coniferous,Wetland] * HaPerCell
+     WetlandAreaMixed: StandTypeByLU[Mixed,Wetland] * HaPerCell
+     WetlandAreaDecid: StandTypeByLU[Deciduous,Wetland] * HaPerCell
+
+     PoorDrainageConif: StandTypeByLU[Coniferous,PoorDrainage] * HaPerCell
+     PoorDrainageMixed: StandTypeByLU[Mixed,PoorDrainage] * HaPerCell
+     PoorDrainageDecid: StandTypeByLU[Deciduous,PoorDrainage] * HaPerCell
+
+     ImperfectDrainageConif: StandTypeByLU[Coniferous,ImperfectDrainage] * HaPerCell
+     ImperfectDrainageMixed: StandTypeByLU[Mixed,ImperfectDrainage] * HaPerCell
+     ImperfectDrainageDecid: StandTypeByLU[Deciduous,ImperfectDrainage] * HaPerCell
+
+     ModerateDrainageConif: StandTypeByLU[Coniferous,ModerateDrainage] * HaPerCell
+     ModerateDrainageMixed: StandTypeByLU[Mixed,ModerateDrainage] * HaPerCell
+     ModerateDrainageDecid: StandTypeByLU[Deciduous,ModerateDrainage] * HaPerCell
+
+     GoodDrainageConif: StandTypeByLU[Coniferous,GoodDrainage] * HaPerCell
+     GoodDrainageMixed: StandTypeByLU[Mixed,GoodDrainage] * HaPerCell
+     GoodDrainageDecid: StandTypeByLU[Deciduous,GoodDrainage] * HaPerCell
+
+     RapidDrainageConif: StandTypeByLU[Coniferous,RapidDrainage] * HaPerCell
+     RapidDrainageMixed: StandTypeByLU[Mixed,RapidDrainage] * HaPerCell
+     RapidDrainageDecid: StandTypeByLU[Deciduous,RapidDrainage] * HaPerCell
+  ENDFN
+
+ // Output block size distribution                RT added the following three sections on Andrew's advice
+ IF (Time > 0) AND ((Time +BaseTimestep) > EndTime)
+   OVER INDEX SEQUENCE(1,NumLandUnits-1) // first sum overall distribution regardless of land unit  //RT added -1
+
+
+
+      landUnit = Index
+      BlockSizeDist[Index,0] = 0
+      BlockSizeArea[Index,0] = 0
+      OVER INDEX SEQUENCE(0,NumBlockClasses-1)
+         BlockSizeDist[Index,0] = BlockSizeDist[Index,0] + BlockSizeDist[Index,landUnit]
+         BlockSizeArea[Index,0] = BlockSizeArea[Index,0] + BlockSizeArea[Index,landUnit]
+      ENDFN
+   ENDFN
+
+   OVER INDEX SEQUENCE(0,0) //NumLandUnits-1) // second output results overall (second index 0) and by land unit RT added -1
+      landUnit = Index
+      n = 0
+      a = 0
+      OVER INDEX SEQUENCE(0,NumBlockClasses-1)
+         n = n + BlockSizeDist[Index,landUnit]
+         a = a + BlockSizeArea[Index,landUnit]
+      ENDFN
+
+      OVER INDEX SEQUENCE(0,NumBlockClasses-1)
+         OUTPUT RECORD(BlockDist)
+            Run
+            LandUnit: landUnit
+            BlockClass: Index
+            BlockSizeMid: (Index + 0.5) * BlockClassSize // middle of size class
+            NumBlocks: BlockSizeDist[Index, landUnit]
+            Area: BlockSizeArea[Index,landUnit]
+            pNumBlocks: BlockSizeDist[Index,landUnit]/n // proportional to number of blocks
+            pArea: BlockSizeArea[Index,landUnit] / a  // proportional to area cut
+         ENDFN
+      ENDFN
+   ENDFN
+ ENDFN
+
+
+ENDRT
+
+
+
+// Setting the number of clusters to zero will cause no cell initiations to occur
+NUMCLUSTERS = 0
+

@@ -1,0 +1,84 @@
+LSEVENT: UpdateDist2Rds
+
+DEFINITIONS
+   LAYER: StudyArea, RoadSegmentId, RoadType, NearestRoadLoc
+   LAYER: Dist2ActiveRds
+
+   GLOBAL CONSTANT: CellWidth, MaxDist2ActiveRds
+
+   CELL VARIABLE: startLocation, numSteps, currDist2Rds, isSpur
+
+   GLOBAL VARIABLE: BaseTimestep, MaxDist2Road
+
+   // Road types
+   GLOBAL CONSTANT: activeRoad, newlyActiveRoad, newlyActiveSpur, activeSpur
+ENDDEF
+
+RETURNTIME = IF Time EQ 0 THEN 0.3 ELSE BaseTimestep
+
+// Only need to visit roads (note: initially active roads may get re-activated with spurs)
+EVENTLOCATION
+   REGION WHOLE MAP
+      DECISION StudyArea > 0
+ENDEL
+
+
+PROBINIT
+   // Start in newly active road segments and new spurs
+   PROBINIT = (RoadType EQ newlyActiveRoad) OR (RoadType EQ newlyActiveSpur)
+   startLocation = Location
+   numSteps = 0
+   isSpur = (RoadType EQ newlyActiveSpur)
+ENDPI
+
+
+
+TRANSITIONS
+   currDist2Rds = DISTANCE(Location, startLocation) * CellWidth
+
+   // Continue as long as the current distance is less than the recorded distance
+   // and we haven't reached the maximum to update
+   TRANSITIONS = (RoadType EQ newlyActiveRoad) OR (RoadType EQ newlyActiveSpur) OR ((currDist2Rds < Dist2ActiveRds) AND (currDist2Rds < MaxDist2Road))
+   Dist2ActiveRds = MIN(Dist2ActiveRds, currDist2Rds)
+
+   IF isSpur
+      NearestRoadLoc = startLocation
+   END
+
+   IF (RoadType EQ newlyActiveRoad) OR (RoadSegmentId > 0)
+      RoadType = activeRoad
+   ELSE IF (RoadType EQ newlyActiveSpur)
+      RoadType = activeSpur
+   END
+ENDTR
+
+SPREADTIME = IF (startLocation NEQ Location) THEN 0.0000001*(1/MaxDist2ActiveRds) ELSE -2
+
+// Road segments include diagonal neighbours, but if we spread using diagonal, then we have problems
+SPREADLOCATION
+   IF (RoadType EQ newlyActiveRoad) OR (RoadType EQ newlyActiveSpur)
+      maxD = 1.5
+   ELSE
+      rowDiff = | FLOOR(Location / NUMCOLS) - FLOOR(startLocation / NUMCOLS) | + 1
+      colDiff = | (Location % NUMCOLS) - (startLocation % NUMCOLS) | + 1
+      maxD = IF ((numSteps + 2 - CEIL((rowDiff^2 + colDiff^2)^0.5)) > 1) THEN 1.5 ELSE 1
+   END
+
+   REGION CENTRED(1, maxD)
+      DECISION (StudyArea > 0) AND ((RoadType EQ newlyActiveRoad) OR (RoadType EQ newlyActiveSpur) OR (Dist2ActiveRds > SOURCE currDist2Rds))
+ENDSL
+
+SPREADPROB
+   SPREADPROB = 1
+
+   IF (RoadType EQ newlyActiveRoad) OR (RoadType EQ newlyActiveSpur)
+      startLocation = Location
+      numSteps = 0
+      isSpur = (RoadType NEQ newlyActiveRoad) AND (RoadSegmentId <= 0)
+   ELSE
+      startLocation = SOURCE startLocation
+      numSteps = SOURCE numSteps + 1
+      isSpur = SOURCE isSpur
+   END
+ENDSP
+

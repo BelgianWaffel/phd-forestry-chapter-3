@@ -1,0 +1,16 @@
+DrainageName	DrainageId
+dVeryPoor	6
+dPoor	5
+dRapidDrainage	1
+dImperfect	4
+dPoorLateralDrainage	5
+dModerate	3
+dGood	2
+dVeryPoorSolidHorizon	6
+dVeryRapidExcesiveDrainage	0
+dImperfectLateralDrainage	4
+dVeryPoorLateralDrainage	6
+dModerateLateralDrainage	3
+dGoodLateralDrainage	2
+dModerateSolidHorizon	3
+dRapidLateralDrainage	1

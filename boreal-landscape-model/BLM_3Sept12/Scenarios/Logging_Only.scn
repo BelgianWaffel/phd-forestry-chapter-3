@@ -1,0 +1,108 @@
+SELES Scenario
+
+// ############################################################################ //
+// Load core inputs
+// ############################################################################ //
+Scenario: ..\Model\coreInputs.scn
+
+
+// ############################################################################ //
+// Load unique input layers for this scenario
+// Use same format as in coreInputs.scn
+// ############################################################################ //
+ManagementZone = $gisData$\\ManagementZone
+
+
+// ############################################################################ //
+// Set unique external script variables for this scenario
+//    to change sub-model components and input tables
+// Use same format as in coreInputs.scn
+// ############################################################################ //
+
+// Alternate landscape event file names (must refer to a valid landscape event)
+$FireEventName$ = SimpleFire  // SimpleFire or FireFBP
+
+// Sub-model (add-on) files (will have a .sel extension)
+$SBWSubModel$ = SubModel_noSBW       // no spruce budworm or 2nd cohort
+$PatchMetricsSubModel$ = SubModel_0  // no patch metrics
+
+// Set external variables for input tables (will have a .txt extension)
+$SppSuccessionFile$ = SppSuccession //_noSucc
+$SymmetricIncreasFile$ = SymmetricIncrease //_noSucc
+$ContagionFile$ = Contagion //_noSucc
+
+$AACFile$ = AACAreaPct
+
+
+// ############################################################################ //
+// Load model
+// ############################################################################ //
+
+Model Dimensions: LandUnit
+..\Model\BLM.sel
+
+
+Minimize Static
+Tile
+
+
+// ############################################################################ //
+// Load core parameter default settings
+// ############################################################################ //
+Scenario: ..\Model\coreParameterDefaults.scn
+
+// ############################################################################ //
+// Modify default settings
+// NOTE: Generally, do not change default values in the .sel files or in coreParameterDefaults.scn
+//       Instead, change then in the main scenario file for your simulation
+//   Use coreParameterDefaults.scn to see the main parameters (for the full set, look in VLM.sel)
+// ############################################################################ //
+
+// ############################################################################ //
+// Sub-models 
+// ############################################################################ //
+Fire.lse OFF  // disable fire
+
+// ############################################################################ //
+// Parameters
+// ############################################################################ //
+BaseTimestep = 5
+ReportingInterval = 50 //-1 for no output
+
+// Turn on Succession
+ApplySppSuccession = TRUE
+pTrajContagion = 0.9  
+
+
+// Set fire parameters
+FireModelType = rSimpleEmpiricalFire
+
+FireMeanSize = 200 // now means mean duration (mean radius in 100m; 25 gives around 130 year return time)
+FireMeanNumPerDecade = 12
+
+
+//  Set harvest parameters 
+// Area-based harvest
+AreaBasedHarvest = TRUE
+PercentBasedHarvest = TRUE
+
+SetManagementZone = rSQ, 0, 0  // can be three different mgmt types at different times during simulation
+SetManagementZoneSched = 0, 0, 0  // indicates number of years (consecuative) of each mgmt. type listed above.
+AACMult = 1//0.65  // Multiply AAC by this...
+
+BlockSizeMin = 500  // cutblock size
+BlockSizeMax = 2000 // 200ha = max allowed in QC
+
+// ############################################################################ //
+// Create output folders
+// ############################################################################ //
+cwd oLoggingOnly
+mkdir cell
+mkdir cellhd
+
+// ############################################################################ //
+// Run simulation. If there is no SimStart command, then simulations must be run manually
+//   SimStart 105 1
+// ############################################################################ //
+SimStart 105 1
+

@@ -1,0 +1,33 @@
+// Set size of each each patch of forest available for harvest (max potential block size)
+// Note: IdMaxBlockSize will set up the MaxPotBlockSize layer with 0 in all cells unavailable for harvest,
+// and 1 in all cells available for harvest, except one cell in each patch (the last one visited) will have
+// the size of the patch (hence > 1). At the end of this event, all cells available for harvest will have a
+// value equal to the size of the patch.
+LSEVENT: SetMaxBlockSize
+
+DEFINITIONS
+   GLOBAL VARIABLE: BaseTimestep // Base Time step (in years)
+   LAYER: MaxPotBlockSize
+   CLUSTER VARIABLE: currPatchSize
+ENDDEF
+
+
+RETURNTIME = IF Time EQ 0 THEN 0.13 ELSE BaseTimestep  // just after IdMaxBlockSize
+
+PROBINIT
+   PROBINIT = (MaxPotBlockSize > 1) // only one cell per patch will initially have a value > 1
+   currPatchSize = MaxPotBlockSize
+ENDPI
+
+
+TRANSITIONS
+   TRANSITIONS = TRUE
+   MaxPotBlockSize = currPatchSize
+ENDTR
+
+SPREADLOCATION
+   REGION CENTRED(1, 1.5)
+      DECISION (MaxPotBlockSize EQ 1)
+ENDSL
+
+SPREADTIME = 0 // spread with no time increment (will spread all patches in parallel)
