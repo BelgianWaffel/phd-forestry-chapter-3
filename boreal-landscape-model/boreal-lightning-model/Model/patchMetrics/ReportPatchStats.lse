@@ -1,0 +1,424 @@
+LSEVENT: ReportPatchMetrics
+
+DEFINITIONS	
+   GLOBAL CONSTANT: HaPerCell, CellWidth, MaxPatchTypes, pi
+   GLOBAL VARIABLE: BaseTimestep // Base Time step (in years)
+   GLOBAL VARIABLE: NumPatchTypes, MinPatchType
+
+   LAYER: StudyArea, Species
+
+   // Computed in identifyPatches event
+
+
+   // Local metrics computed from patch list
+   GLOBAL VARIABLE: TotArea[] // Area of patches by tpe
+   GLOBAL VARIABLE: NumPatches[] // Number of patches by type
+
+   GLOBAL VARIABLE: TotalEdge[], TotalEdgeArea[]   // Edge Indices
+   GLOBAL VARIABLE: TCA[], NumCA[]   // Core Area Indices
+   GLOBAL VARIABLE: Eik[]   // Adjacency matrix
+   GLOBAL VARIABLE: NumNeighbs[], NumSameNeighbs[]  // Contagion
+
+   // Patch list
+   GLOBAL CONSTANT: NumPatchStats, rId, rType, rArea, rCoreArea, rPerim, rCentroid, rMaxCCE, rNNDist
+   GLOBAL LIST{NumPatchStats} VARIABLE: patchList[], coreAreaList[]
+   LOCAL: patchVar[NumPatchStats]
+
+   // Area indices
+   LOCAL: A, A2[MaxPatchTypes+1], tA2  // A2 is the sum of squared areas per patch.
+
+   // Patch indices
+   LOCAL: NP, MPS, tPSSD
+   LOCAL: MeanPS[MaxPatchTypes+1], MaxPS[MaxPatchTypes+1], MinPS[MaxPatchTypes+1], PSSD[MaxPatchTypes+1]
+
+   // Edge Indices
+   LOCAL: MSI[MaxPatchTypes+1], AWMSI[MaxPatchTypes+1]
+   LOCAL: aan[MaxPatchTypes+1], paRatio[MaxPatchTypes+1]   // related to inverse of MSI
+
+   // Core Area Indices
+   // Total core area
+   LOCAL: MCA1[MaxPatchTypes+1], CASD1[MaxPatchTypes+1], MCA2[MaxPatchTypes+1], CASD2[MaxPatchTypes+1]
+   LOCAL: tMCA1, tCASD1, tMCA2, tCASD2, MCAI[MaxPatchTypes+1]
+
+   LOCAL: IJI[MaxPatchTypes+1]   // Interspersion and Juxtaposition
+
+   OUTPUT VARIABLE: LSStatsFile = "LSStats.txt"
+   OUTPUT VARIABLE: ClassStatsFile = "ClassStats.txt"
+  // OUTPUT VARIABLE: PatchStatsFile = "PatchStats.txt"
+ENDDEF
+
+//Return time after succession, growing stock and identifyPatches
+RETURNTIME
+   RETURNTIME = IF Time EQ 0 THEN 0.13 ELSE BaseTimestep
+
+   // First compute second order stats for patches and core areas
+   // Clear old values: need to do for all arrays and global variables
+   A = 0
+   tA2 = 0
+   A2 [=] 0
+   NP = 0
+   MPS = 0
+   tPSSD = 0
+
+   MaxPS [=] 0
+   MinPS [=] 0
+   PSSD [=] 0
+
+   MSI [=] 0
+   AWMSI [=] 0
+   aan [=] 0
+   paRatio [=] 0
+
+   NCA = 0
+   CASD1 [=] 0
+   CASD2 [=] 0
+   tMCA1 = 0
+   tCASD1 = 0
+   tMCA2 = 0
+   tCASD2 = 0
+   MCAI [=] 0
+
+
+   // compute total area in landscape with a tree species
+   OVER REGION WHOLE MAP
+//      DECISION (0 <= PatchType < (MinPatchType + NumPatchTypes))
+      DECISION (StudyArea > 0) AND (Species > 0)
+      A = A + 1
+   END
+
+   OVER INDEX(0, NumPatchTypes-1)
+      patchType = Index + MinPatchType
+      NP = NP + NumPatches[patchType]
+//      A = A + TotArea[patchType]
+
+      MeanPS[patchType] = IF (NumPatches[patchType] > 0) THEN (TotArea[patchType] / NumPatches[patchType]) ELSE 0
+      MPS = MPS + TotArea[patchType]
+      MCA1[patchType] = IF (NumPatches[patchType] > 0) THEN (TCA[patchType] / NumPatches[patchType]) ELSE 0
+      tMCA1 = tMCA1 + TCA[patchType]
+
+      NCA = NCA + NumCA[patchType]
+      MCA2[patchType] = IF (NumCA[patchType] > 0) THEN (TCA[patchType] / NumCA[patchType]) ELSE 0
+      tMCA2 = tMCA2 + TCA[patchType]
+   END
+   MPS = MPS / NP
+   tMCA1 = tMCA1 / NP
+   tMCA2 = tMCA2 / NCA
+
+   // Iterate over list of patches to compute stats
+   OVER INDEX(0, NumPatchTypes-1)
+      i = Index + MinPatchType
+      pos = HEAD(patchList[i])
+      IF pos
+         MaxPS[i] = patchVar[rArea]
+         MinPS[i] = patchVar[rArea]
+      END
+
+      WHILE (pos)
+         patchVar [=] GET(patchList[i], pos)
+         pos = NEXT(patchList[i], pos)
+
+//         i = patchVar[rType]
+         patchSize = patchVar[rArea]
+         patchCoreSize = patchVar[rCoreArea]
+         patchPerim = patchVar[rPerim]
+         MaxPS[i] = MAX(MaxPS[i], patchSize)
+         MinPS[i] = MIN(MinPS[i], patchSize)
+
+         A2[i] = A2[i] + (patchSize*HaPerCell)^2
+
+         // Sum square of different between patch size and mean patch size
+         PSSD[i] = PSSD[i] + (patchSize - MeanPS[i])^2
+         tPSSD = tPSSD + (patchSize - MPS)^2
+         MSI[i] = MSI[i] + (0.25 * patchPerim / (patchSize ^ (1/2)))
+         AWMSI[i] = AWMSI[i] + (0.25 * patchPerim * (patchSize ^ (1/2)))
+
+         aan[i] = aan[i] + 16 * patchSize  / (patchPerim^2)
+         paRatio[i] = paRatio[i] + patchPerim / patchSize
+
+         CASD1[i] = CASD1[i] + (patchCoreSize - MCA1[i])^2
+
+         tCASD1 = tCASD1 + (patchCoreSize - tMCA1)^2
+         MCAI[i] = IF (patchSize > 0) THEN (MCAI[i] + patchCoreSize / patchSize) ELSE MCAI[i]
+
+        /* OUTPUT(PatchStatsFile)
+            Run
+            Year: FLOOR(Time)
+            id: patchVar[rId]
+            type: patchVar[rType]
+            size: patchVar[rArea]* HaPerCell
+            coreSize: patchVar[rCoreArea]
+         END */
+      END
+      tA2 = tA2 + A2[i] // sum up area sq overall
+
+      // Iterate over list of core areas to compute stats
+      // Sum square of different between patch size and mean patch size
+      pos = HEAD(coreAreaList[i])
+      WHILE (pos)
+         patchVar [=] GET(coreAreaList[i], pos)
+         pos = NEXT(coreAreaList[i], pos)
+
+//         i = patchVar[rType]
+         patchSize = patchVar[rArea]
+         patchCoreSize = patchVar[rCoreArea]
+         patchPerim = patchVar[rPerim]
+
+         CASD2[i] = CASD2[i] + (patchCoreSize - MCA2[i])^2
+         tCASD2 = tCASD2 + (patchCoreSize - tMCA2)^2
+      END
+   END
+
+
+   // Finally summarize over patch types and output results
+   tTE = 0
+   tTEA = 0
+   MaxPatch = 0
+   MinPatch = NUMCELLS
+
+   tMSI = 0 
+   tAWMSI = 0 
+   tMCAI = 0
+
+   taan = 0
+   taan2 = 0
+   tap2 = 0
+
+   tTCA = 0
+   NCA = 0
+
+   tIJI = 0
+   tContag = 0
+   tContag2 = 0
+
+   measuredDiversity = 0
+   measuredDiversity2 = 0
+   do = 0
+
+   SHDI = 0
+   SIDI = 1
+   MSIDI = 0
+   PR = 0
+
+   asm = 0
+
+   OVER INDEX(0, NumPatchTypes-1)
+      patchType = Index + MinPatchType
+
+      tTE = tTE + TotalEdge[patchType]
+      tTEA = tTEA + TotalEdgeArea[patchType]
+      tap2 = IF (NumPatches[patchType] > 0) THEN tap2 + TotalEdge[patchType] / NumPatches[patchType] ELSE tap2
+      MaxPatch = MAX(MaxPatch, MaxPS[patchType])
+      MinPatch = MIN(MinPatch, MinPS[patchType])
+
+      PSSD[patchType] = IF (NumPatches[patchType] > 0) THEN (PSSD[patchType] / NumPatches[patchType])^(1/2) ELSE 0
+
+      tMSI = tMSI + MSI[patchType]
+      MSI[patchType] = IF (NumPatches[patchType] > 0) THEN MSI[patchType] / NumPatches[patchType] ELSE 0
+
+      tAWMSI = tAWMSI + AWMSI[patchType]
+      AWMSI[patchType] = IF (TotArea[patchType] > 0) THEN AWMSI[patchType] / TotArea[patchType] ELSE 0
+
+      taan  = taan  + aan[patchType]
+      aan[patchType] = IF (NumPatches[patchType] > 0) THEN aan[patchType] / NumPatches[patchType] ELSE 0
+      taan2  = taan2  + aan[patchType]
+
+      paRatio[patchType] = IF (NumPatches[patchType] > 0) THEN paRatio[patchType] / NumPatches[patchType] ELSE 0
+
+      tTCA = tTCA + TCA[patchType]
+      NCA = NCA + NumCA[patchType]
+
+      CASD1[patchType] = IF (NumPatches[patchType] > 0) THEN (CASD1[patchType] / NumPatches[patchType])^(1/2) ELSE 0
+      CASD2[patchType] = IF (NumCA[patchType] > 0) THEN (CASD2[patchType] / NumCA[patchType])^(1/2) ELSE 0
+  
+      tMCAI = tMCAI + MCAI[patchType]
+
+      PR = PR + (TotArea[patchType] NEQ 0)
+   END
+
+   OVER INDEX(0, NumPatchTypes-1)
+      patchType = Index + MinPatchType
+      OVER INDEX(patchType + 1, NumPatchTypes - 1)
+         patchType2 = Index
+         x = IF (tTE > 0) THEN Eik[patchType, patchType2] / tTE ELSE 0
+         tIJI = tIJI + x * LOG(x)
+      END
+
+      Pi = TotArea[patchType] / A
+      OVER INDEX(0, NumPatchTypes-1)
+         patchType2 = Index + MinPatchType
+         AMik = IF (TotalEdge[patchType] > 0) THEN Eik[patchType, patchType2] / TotalEdge[patchType] ELSE 0
+         IJI[patchType] = IJI[patchType] + AMik * LOG(AMik)
+
+         x = IF ((TotalEdge[patchType] > 0) AND (Pi > 0)) THEN Pi * Eik[patchType, patchType2] / TotalEdge[patchType] ELSE 0
+         tContag = tContag + x * LOG(x)
+
+         measuredDiversity  = measuredDiversity - AMik * LOG(AMik)
+         measuredDiversity2  = IF(patchType NEQ patchType2) THEN  measuredDiversity2 - AMik * LOG(AMik) ELSE measuredDiversity2
+         asm = asm + AMik^2
+      END
+      IJI[patchType] = IF (PR > 2) THEN (-1 * IJI[patchType]/LOG(PR-1)) ELSE 0
+
+      SHDI = IF (TotArea[patchType] EQ 0) THEN SHDI ELSE SHDI - (TotArea[patchType]/A)*LOG(TotArea[patchType]/A)
+      SIDI = SIDI - (TotArea[patchType]/A)^2
+      MSIDI = IF (TotArea[patchType] EQ 0) THEN MSIDI ELSE MSIDI - LOG((TotArea[patchType]/A)^2)
+   END
+
+
+   OVER INDEX(0, NumPatchTypes-1)
+      patchType = Index + MinPatchType
+      Pi = TotArea[patchType] / A
+
+      // Assume that Pi < 0.5
+      Contag2 = (NumSameNeighbs[patchType] / NumNeighbs[patchType]) - Pi
+      Contag2 = IF (Pi <= 0) OR (Pi >= 1) THEN 0
+                ELSE IF (Contag2 >= 0) THEN Contag2 / (1 - Pi) ELSE Contag2 / Pi
+
+      do = do - Pi * LOG(Pi) 
+
+         
+      OUTPUT(ClassStatsFile)
+         DECISION TotArea[patchType] > 0
+         Run
+         Year: FLOOR(Time)
+         Type: patchType
+
+         A: TotArea[patchType] * HaPerCell
+         A2: A2[patchType]
+         EMS: A2[patchType] / (TotArea[patchType] * HaPerCell) // Effective mesh size
+         PCTLAND: 100 * Pi
+         LPI: 100 * MaxPS[patchType] / A
+         LargestPatch: MaxPS[patchType] * HaPerCell
+         SmallestPatch: MinPS[patchType] * HaPerCell
+         NP: NumPatches[patchType]
+         PD: 100 * NumPatches[patchType] / (A * HaPerCell)
+         MPS: MeanPS[patchType] * HaPerCell
+
+         PSSD: PSSD[patchType] * HaPerCell
+         PSCV: 100 * PSSD[patchType]/MeanPS[patchType]
+
+         TE: CellWidth * TotalEdge[patchType]
+         ED: CellWidth * TotalEdge[patchType] / A
+         ap: CellWidth * TotalEdge[patchType] / NumPatches[patchType]
+         TEA: TotalEdgeArea[patchType] * HaPerCell
+         EDA: 100 * TotalEdgeArea[patchType] / A
+         OPOE: TotalEdgeArea[patchType] / (TotalEdge[patchType] * NumPatches[patchType])
+
+         LSI: 0.25 * TotalEdge[patchType] / ((TotArea[patchType])^(1/2))
+         MSI: MSI[patchType]
+         AWMSI: AWMSI[patchType]
+
+         aan: aan[patchType]
+
+         CPCTLAND: 100 * TCA[patchType] / A
+         TCA: TCA[patchType] * HaPerCell
+         NCA: NumCA[patchType]
+         CAD: 100 * NumCA[patchType] / (A * HaPerCell)
+
+         MCA1: MCA1[patchType] * HaPerCell
+         CASD1: CASD1[patchType] * HaPerCell
+         CACV1: 100 * CASD1[patchType]/MCA1[patchType]
+
+         MCA2: MCA2[patchType] * HaPerCell
+         CASD2: CASD2[patchType] * HaPerCell
+         CACV2: 100 * CASD2[patchType]/MCA2[patchType]
+
+         TCAI: 100 * TCA[patchType] / TotArea[patchType]
+         MCAI: 100 * MCAI[patchType] / NumPatches[patchType]
+
+         IJI: 100 * IJI[patchType]
+
+         // Zero -> random adjacency (in [-1, 1]
+         // Positive -> more clumped than random
+         // Negative -> less clumped than random
+         CONTAG2: Contag2
+         NumNeighbs: NumNeighbs[patchType]
+         NumSameNeighbs: NumSameNeighbs[patchType]
+      END
+
+      tContag2 = tContag2 + Contag2
+   END
+
+
+   tPSSD = (tPSSD / NP)^(1/2)
+   tCASD1 = (tCASD1 / NP)^(1/2)
+   tCASD2 = (tCASD2 / NCA)^(1/2)
+   tIJI = IF (PR > 2) THEN (-1 * tIJI/LOG((1/2) * PR * (PR-1))) ELSE 0
+   tContag = 1 + tContag / (2 * LOG(PR))
+
+   OUTPUT(LSStatsFile)
+      Run
+      Year: FLOOR(Time)
+      A: A * HaPerCell
+      tA2:tA2 
+      EMS: tA2/(A * HaPerCell) // Effective mesh size
+      MPS : MPS * HaPerCell
+
+/* following may need to be fixed (clear at start of year period)
+      LPI: 100 * MaxPatch / A
+      LargestPatch: MaxPatch  * HaPerCell
+      SmallestPatch: MinPatch  * HaPerCell
+      NP: NP
+      PD: 100 * NP  / (A * HaPerCell)
+      MPS: MPS * HaPerCell
+
+      PSSD: tPSSD * HaPerCell
+      PSCV: 100 * tPSSD/MPS
+      TE: CellWidth * tTE
+      ED: CellWidth * tTE / A
+      ap: CellWidth * tTE / NP
+      ap2: CellWidth * tap2
+      TEA: tTEA * HaPerCell
+      EDA: 100 * tTEA / A
+      OPOE: tTEA / (tTE * NP)
+
+      LSI: 0.25 * tTE / (A^(1/2))
+      MSI: tMSI / NP
+      AWMSI: tAWMSI / A
+
+      aan: taan / NP
+      aan2: taan2
+
+      TCA: tTCA * HaPerCell
+      NCA: NCA
+      CAD: 100 * NCA / (A * HaPerCell)
+
+      MCA1: tMCA1 * HaPerCell
+      CASD1: tCASD1 * HaPerCell
+      CACV1: 100 * tCASD1/tMCA1
+
+      MCA2: tMCA2 * HaPerCell
+      CASD2: tCASD2 * HaPerCell
+      CACV2: 100 * tCASD2/tMCA2
+
+      TCAI: 100 * tTCA / A
+      MCAI: 100 * tMCAI / NP
+
+      tIJI: 100 * tIJI
+      CONTAG1: 100 * tContag
+      CONTAG2: tContag2 / PR
+
+      co: 2 * LOG(PR) - measuredDiversity
+      co2: (LOG(PR^2 + PR) - LOG(2)) - measuredDiversity
+      col: 1 - measuredDiversity / (2*LOG(PR))
+      cor: 1 - measuredDiversity / (LOG(PR^2 + PR) - LOG(2))
+      asm: asm
+      do: LOG(PR) - do
+      dor: 1 - LOG(PR) / do
+      ede: 1 - measuredDiversity2 / (2*LOG(PR))
+      ede2: 1 - measuredDiversity2 / (LOG(PR^2 + PR) - LOG(2))
+
+      SHDI: SHDI
+      SIDI: SIDI
+      MSIDI: MSIDI
+      PR: PR
+      PRD: 100 * PR / (A * HaPerCell)
+      RPR: PR / (NumPatchTypes - 1)
+      SHEI: IF (PR > 1) THEN SHDI / LOG(PR) ELSE 0
+      SIEI: IF (PR > 1) THEN SIDI / (1 - 1/PR) ELSE 0
+      MSIEI: IF (PR > 1) THEN MSIDI / LOG(PR) ELSE 0 
+*/
+   END
+ENDRT
+
+// Don't continue
+NUMCLUSTERS = 0

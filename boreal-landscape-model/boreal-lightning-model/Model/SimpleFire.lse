@@ -1,0 +1,236 @@
+// Empirical fire model for boreal forested landscapes
+// Can be parameterized to run as a "simple empirical" size-based (top-down) model based on number and size of fires,
+// or as a "more complex somewhat process-based" (bottom-up) model based on number and duration of fires and fuel.
+// In this latter "size" parameters are interpreted as "duration" (in days)
+LSEVENT: Fire
+
+DEFINITIONS
+   /////////////////////////////////////////////////
+   // INPUT STATE - constants and parameters
+   /////////////////////////////////////////////////
+   GLOBAL CONSTANT: HaPerCell, NumLandUnits
+   GLOBAL VARIABLE: BaseTimestep // Base Time step (in years)
+
+   // Fire Parameters
+   GLOBAL VARIABLE: FireMeanNumPerDecade, FireMeanSize, FireMaxSize
+   GLOBAL VARIABLE: FireProbUnburned[]
+
+   // LandUnit in rows , parameters in columns
+   GLOBAL CONSTANT: LandUnitInfo[], rFireReturnInterval
+
+   LAYER: StudyArea, LandUnit, Ecoregion, ManagementZone
+
+   /////////////////////////////////////////////////
+   // INPUT STATE - dynamic in other events
+   /////////////////////////////////////////////////
+   LAYER: Species, Species2, PctCohort2
+   GLOBAL VARIABLE: LUSize[]
+
+   /////////////////////////////////////////////////
+   // FEEDBACK STATE
+   /////////////////////////////////////////////////
+   LAYER: VolPerHa
+   GLOBAL CONSTANT: VolScale
+
+   /////////////////////////////////////////////////
+   // OUTPUT STATE
+   /////////////////////////////////////////////////
+   LAYER: LastDisturbance  // type of last disturbance
+   GLOBAL CONSTANT: rFire
+
+   // Shows areas recently burned and potential salvageable
+   LAYER: Burnt
+   GLOBAL CONSTANT: MaxTimeSinceDisturbance
+
+   LAYER: SalvageableVolume
+
+   LOCAL: minMFRI, meanMFRI, sumMFRI
+
+   EVENT VARIABLE: numberIgnitions
+   CLUSTER VARIABLE: targetSize, actualSize, remSize
+   CLUSTER VARIABLE: frontSize, yearInPeriod, initRegion
+   CELL VARIABLE: isBurning, srcIsBurning
+
+   // Reporting variables
+   GLOBAL VARIABLE: VolumeUnsalvaged[]
+   GLOBAL CONSTANT: Salvageable, Lost
+
+   GLOBAL VARIABLE: VolumeBurnedByZone[], AreaBurnedByZone[], AreaBurnedByLandUnit[]
+
+   GLOBAL VARIABLE: VolDisturbed[], AreaDisturbed[], NumDisturbPatches[], SelectedAreaDisturbed[], NumSelectedDisturbPatches[]
+   GLOBAL CONSTANT: rTotalDisturbed, rForestDisturbed
+
+   // Fire reporting
+   OUTPUT VARIABLE: fFireRate = fireRate.txt
+ENDDEF
+
+INITIALSTATE
+   INITIALSTATE = 1
+
+   // Set up fire parameters once at the start
+   minMFRI = 0
+   sumMFRI = 0
+   n = 0
+   OVER INDEX(0,NumLandUnits-1)
+      minMFRI = IF (minMFRI EQ 0) THEN LandUnitInfo[Index, rFireReturnInterval]
+                ELSE IF (LandUnitInfo[Index, rFireReturnInterval] EQ 0) THEN minMFRI
+                ELSE MIN(minMFRI, LandUnitInfo[Index, rFireReturnInterval])
+      IF (LandUnitInfo[rFireReturnInterval, Index] > 0)
+         sumMFRI = sumMFRI + LandUnitInfo[Index, rFireReturnInterval] * LUSize[Index]
+         n = n + LUSize[Index]
+      END
+   END
+   meanMFRI = sumMFRI/n
+ENDIS
+
+
+RETURNTIME
+   RETURNTIME = IF (Time EQ 0) THEN 0.7 ELSE BaseTimestep 
+
+   // Clear tracking variables
+   VolumeBurnedByZone [=] 0
+   AreaBurnedByZone [=] 0
+   AreaBurnedByLandUnit [=] 0
+
+   VolDisturbed[rFire] = 0
+   AreaDisturbed[rFire,rTotalDisturbed] = 0
+   AreaDisturbed[rFire,rForestDisturbed] = 0
+
+   NumDisturbPatches[rFire] = 0
+   VolumeUnsalvaged[rFire, Lost] = 0
+   SelectedAreaDisturbed[rFire] = 0
+
+   // Update time since disturbance information
+   // Need to do this here, since Burnt may include non-forested cells
+   OVER REGION WHOLE MAP
+      DECISION Burnt > 0
+      Burnt = MAX(0,Burnt - BaseTimestep)
+   END
+ENDRT
+
+// Only ignite in forested cells
+EVENTLOCATION
+  STATIC REGION WHOLE MAP
+     DECISION (Species > 0) AND (StudyArea > 0)
+ENDEL
+
+// Start the number of ignitions from a Poisson distribution
+NUMCLUSTERS
+   //  numberIgnitions = POISSON(FireMeanNumPerDecade*BaseTimestep/10])
+   numberIgnitions = ROUND(NEGEXP(FireMeanNumPerDecade*BaseTimestep/10))
+   NumSelectedDisturbPatches[rFire] = numberIgnitions
+
+   NUMCLUSTERS = numberIgnitions
+
+   // For each ignition..
+   frontSize = 1
+   NumDisturbPatches[rFire] =  NumDisturbPatches[rFire] + 1
+
+   // For each opening, select an opening size
+   targetSize = 0 
+   
+   // Restrict fires to greater than 200 ha - mean size paramaterized from "Large Fire Database". PJ
+   meanExtent = FireMeanSize /HaPerCell
+   WHILE (targetSize <= 200) OR (targetSize > FireMaxSize)
+      targetSize = ROUND(NEGEXP(meanExtent))
+   END
+
+   remSize = targetSize
+   SelectedAreaDisturbed[rFire] = SelectedAreaDisturbed[rFire] + targetSize*HaPerCell
+
+   // Pick a year for the fire (to avoid all stands ending up on "BaseTimestep" lines)
+   yearInPeriod = MIN(FLOOR(UNIFORM(0, BaseTimestep)), BaseTimestep-1)
+
+   actualSize = 0
+   initRegion = Ecoregion 
+ENDNC
+
+// Pick site at random
+// Default: random ignition
+//PROBINIT = 1 - LandUnitInfo[LandUnit, rFireReturnInterval]/sumMFRI
+
+
+TRANSITIONS
+   // Special case for termination: decrement fire front info
+   continue = (remSize > 0) AND (Burnt < (MaxTimeSinceDisturbance - BaseTimestep + 1))
+   IF !continue
+      frontSize = frontSize - 1
+   END
+
+   // Only continue if there is still area to burn AND if the stand didn't just burn during this event
+   TRANSITIONS = continue
+
+   // Apply damage...
+   // Only for forested cells
+   IF Species > 0
+      actualSize = actualSize + 1
+      remSize = remSize - 1
+
+      // Record unsalvageable loss from a previous disturbance. Assume any unsalvaged yield is burned
+      IF (SalvageableVolume > 0)
+         VolumeUnsalvaged[LastDisturbance,Salvageable] = VolumeUnsalvaged[LastDisturbance,Salvageable] - SalvageableVolume
+         VolumeUnsalvaged[rFire,Lost] = VolumeUnsalvaged[rFire,Lost] + SalvageableVolume
+      END
+
+      Yield = (VolPerHa/VolScale) * HaPerCell
+      lost = 0.2 * Yield
+      SalvageableVolume = ROUND(Yield - lost)
+
+      // Record unsalvageable loss and increment the unsalvaged burned for this year
+      VolumeUnsalvaged[rFire,Lost] = VolumeUnsalvaged[rFire,Lost] + lost
+      VolumeUnsalvaged[rFire,Salvageable] = VolumeUnsalvaged[rFire,Salvageable] + SalvageableVolume
+      AreaDisturbed[rFire,rForestDisturbed] = AreaDisturbed[rFire,rForestDisturbed] + HaPerCell
+   END
+
+   // Note: Age and Species reassignements in Succession.lse
+   Burnt = MaxTimeSinceDisturbance - yearInPeriod
+   LastDisturbance = rFire
+   VolPerHa = 0 // No more volume when burned --> but there remains the SalvageableVolume
+
+   //////////////////////////////////////////////////////////////////////////////////////////////////////////
+   //  Only stand replacing fire here
+   //  PreDisturbanceAge = StandAge
+   //  StandAge = yearInPeriod // Don't just set to 0, since base time step may be > 1
+   //////////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+   // Increment the yearly volume and areas Burnt
+   VolumeBurnedByZone[ManagementZone] = VolumeBurnedByZone[ManagementZone] + Yield
+   AreaBurnedByZone[ManagementZone] = AreaBurnedByZone[ManagementZone] + HaPerCell
+   AreaBurnedByLandUnit[LandUnit] = AreaBurnedByLandUnit[LandUnit] + HaPerCell
+   VolDisturbed[rFire] = VolDisturbed[rFire] + Yield
+   AreaDisturbed[rFire,rTotalDisturbed] = AreaDisturbed[rFire,rTotalDisturbed] + HaPerCell
+ENDTR
+
+SPREADTIME
+   SPREADTIME = 0
+
+   // Remove cell from the front
+   frontSize = MAX(0,frontSize - 1)
+ENDST
+
+// Spread to the eight neighbours
+SPREADLOCATION
+   REGION CENTRED(1, 1.5)
+      DECISION (StudyArea > 0)
+ENDSL
+
+SPREADPROB
+   SPREADPROB = IF (frontSize < 10) THEN 1 ELSE 0.25 //0.5
+
+   // Increment the front for selected cells
+   frontSize = frontSize + 1
+ENDSP
+
+ENDCLUSTER
+   // Fire information output file 
+   OUTPUT(fFireRate)
+   //DECISION remSize <= 0
+      Run
+      Year: FLOOR(Time)
+      StartEcoRegion:initRegion
+      TargetSize: targetSize * HaPerCell
+      FinalSize: actualSize * HaPerCell
+   END
+
+   ENDCLUSTER = TRUE
+ENDEC
