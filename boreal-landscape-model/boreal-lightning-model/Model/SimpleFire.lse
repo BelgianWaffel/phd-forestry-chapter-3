@@ -18,7 +18,7 @@ DEFINITIONS
    // LandUnit in rows , parameters in columns
    GLOBAL CONSTANT: LandUnitInfo[], rFireReturnInterval
 
-   LAYER: StudyArea, LandUnit, Ecoregion, ManagementZone
+   LAYER: StudyArea, LandUnit, Ecoregion 
 
    /////////////////////////////////////////////////
    // INPUT STATE - dynamic in other events
@@ -55,7 +55,7 @@ DEFINITIONS
    GLOBAL VARIABLE: VolumeUnsalvaged[]
    GLOBAL CONSTANT: Salvageable, Lost
 
-   GLOBAL VARIABLE: VolumeBurnedByZone[], AreaBurnedByZone[], AreaBurnedByLandUnit[]
+   GLOBAL VARIABLE: AreaBurnedByLandUnit[]
 
    GLOBAL VARIABLE: VolDisturbed[], AreaDisturbed[], NumDisturbPatches[], SelectedAreaDisturbed[], NumSelectedDisturbPatches[]
    GLOBAL CONSTANT: rTotalDisturbed, rForestDisturbed

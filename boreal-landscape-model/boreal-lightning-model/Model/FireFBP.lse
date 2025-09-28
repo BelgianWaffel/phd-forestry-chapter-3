@@ -23,8 +23,8 @@ DEFINITIONS
    // LandUnit in rows, parameters in columns
    GLOBAL CONSTANT: LandUnitInfo[], rFireReturnInterval
 
-   LAYER: StudyArea, LandUnit, Ecoregion, ManagementZone
-
+   LAYER: StudyArea, LandUnit, Ecoregion 
+   
    /////////////////////////////////////////////////
    // INPUT STATE - dynamic in other events
    /////////////////////////////////////////////////
@@ -65,7 +65,7 @@ DEFINITIONS
    GLOBAL VARIABLE: VolumeUnsalvaged[]
    GLOBAL CONSTANT: Salvageable, Lost
 
-   GLOBAL VARIABLE: VolumeBurnedByZone[], AreaBurnedByZone[], AreaBurnedByLandUnit[]
+   GLOBAL VARIABLE: AreaBurnedByLandUnit[]
 
    GLOBAL VARIABLE: VolDisturbed[], AreaDisturbed[], NumDisturbPatches[], SelectedAreaDisturbed[], NumSelectedDisturbPatches[]
    GLOBAL CONSTANT: rTotalDisturbed, rForestDisturbed
@@ -217,8 +217,7 @@ TRANSITIONS
    FireIntensity = 0
 
    // Calculate Fire Intensity (only for unburned, but burnable cells)
-   IF (FireModelType EQ rDurationBasedFire) AND (FBPFuels >0) AND (Burnt < (MaxTimeSinceDisturbance - BaseTimestep + 1))
-
+   IF (FireModelType EQ rDurationBasedFire) AND (FBPFuels >0) AND (Burnt < (MaxTimeSinceDisturbance - BaseTimestep + 1)) 
       // Determine FBP fuel effect on initial rate of spread (RSI)
       IF (FBPFuels <= 5) OR (FBPFuels >= 9)
          a = FuelConstants[FBPFuels,0]

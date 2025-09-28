@@ -46,8 +46,6 @@ DEFINITIONS
    GLOBAL CONSTANT: MaxTimeSinceDisturbance
    GLOBAL CONSTANT: postSBWNonHost, postSBWHost, pctHosts
 
-   LAYER: ManagementZone
-   GLOBAL VARIABLE: SetManagementZone[], SetManagementZoneSched[]
    GLOBAL CONSTANT: rAC
 
    /////////////////////////////////////////////////
@@ -232,13 +230,6 @@ INITIALSTATE
       END
    END
 
-   currMgmtZoneSchedId = 0
-
-   IF (SetManagementZone[0] > 0) AND (SetManagementZoneSched[0] EQ 0)
-      ManagementZone = SetManagementZone[0]
-      currMgmtZoneSchedId = 1
-   END
-
    // Set up tracking variables.
    // Only need to consider forested cells.
    OVER REGION WHOLE MAP
@@ -321,17 +312,6 @@ RETURNTIME
       //HostSppByLU [=] 0
    END
 
-   // Update management zone information if scheduled
-   IF (currMgmtZoneSchedId <= 2) AND (SetManagementZone[currMgmtZoneSchedId] > 0) AND (SetManagementZoneSched[currMgmtZoneSchedId] EQ FLOOR(Time))
-      ManagementZone = SetManagementZone[currMgmtZoneSchedId]
-      currMgmtZoneSchedId = currMgmtZoneSchedId + 1
-
-      // Reset the tracking variables
-      ForestSizeByZone[=] 0
-      OVER REGION WHOLE MAP
-         DECISION (SuccessionGroup > 0) AND (Species > 0)
-         ForestSizeByZone[ManagementZone] = ForestSizeByZone[ManagementZone] + 1
-      END
    END
 
    // Update time since disturbance information
@@ -383,12 +363,10 @@ PROBINIT
 
    // Re-compute tracking variables
    // Get age for some variables before it is incremented so we don't lose age '0' stands
-   SizeByYearZone[StandAge,ManagementZone] = SizeByYearZone[StandAge,ManagementZone] + 1
 
    ageClass = MIN(FLOOR(StandAge /ACSize), NumAgeClasses-1)
    SizeByClass[ageClass] = SizeByClass[ageClass] + 1
-   SizeByClassZone[ageClass,ManagementZone] = SizeByClassZone[ageClass,ManagementZone] + 1
-
+   
    // ###################################################################
    
    // ###################################################################
@@ -590,7 +568,8 @@ PROBINIT
 
                   currPct1host = SppLookup[Species, pctHosts]
                   currSpp = Species 
-                  Species = SppLookup[Species,postSBWNonHost]
+
+                  Species = SppLookup[Species,postSBWNonHost]
                   Species2 = IF (currPct1host <= 0) THEN SppLookup[Species2,postSBWHost] // assign a full new species
                              ELSE IF (PctCohort2 > ((100-PctCohort2)*(currPct1host/100))) THEN SppLookup[Species2,postSBWHost]
                              ELSE SppLookup[currSpp,postSBWHost]
@@ -974,8 +953,7 @@ PROBINIT
                // End spatially contagious succession
                // ######################################################################  
                // If we didn't use the spatially contiguous succession pick spp. from distribution in succession file
-            
-               IF (!usedNeighbourTraj) 
+                            IF (!usedNeighbourTraj) 
                   OVER INDEX(1,NumSppCodes-1)
                      tmpLead = SppLookup[Index, 0]
                      tmpSecondary = SppLookup[Index, 1]
@@ -1254,8 +1232,7 @@ PROBINIT
          END
    
       END // ##
-
-      //////////////////////////////////////////////////////////////////
+       //////////////////////////////////////////////////////////////////
       // In all cases....
       //////////////////////////////////////////////////////////////////
       // Track the species composition
