@@ -1,7 +1,6 @@
 Seles Model
 Time Units: Years Century 100 300
 
-
 External Variables:
 
    // Folders
@@ -26,12 +25,6 @@ Landscape Events:
    // Succession events 
    Succession.lse DEBUG
 
-   // Inventory (planning) events
-   GrowingStock.lse DEBUG
-   OperatingAreas.lse DEBUG
-   IdMaxBlockSize.lse DEBUG // Mar 2010: new event o identify max potential block size
-   SetMaxBlockSize.lse DEBUG // Mar 2010: new event to set max potential block size
-
    // Natural disturbance events
    $FireEventName$.lse DEBUG
 
@@ -44,10 +37,6 @@ Legends:
    LandUnitLegend = "$cats$\landunit"
    SuccGroupLegend = "$cats$\serieEvolGrouping"
    SerieEvolLegend = "$cats$\SerieEvol"
-   StandTypeLegend = "..\cats\StandType"
-
-   TreatmentTypes = {1:Unavailable, 2:GreenBlock, 3:SalvageBlock}
-   GSCategories = {0:lTotal, 1:lAvailable, 2:lMHA, 3: lProtected, 4:lDist, 5:lAdjGreenup, 6:lACReserve, 7:lMosaicReserve, 8:lStripCutReserve }
 
    FBPFuelsLegend = "..\cats\FBPFuels"
 
@@ -78,22 +67,21 @@ Global Constants:
    NumSppCodes = ROWS(SppLegend) //ROWS(SppLookup)
    NumSppLeadCodes = ROWS(SppCodes)
 
+   Coniferous = 1
+   Conifer    = 1
+   Mixedwood  = 2
+   Mixed      = 2
+   Deciduous  = 3
+   Decid      = 3
+
    ///////// Inventory /////////////////////////
-   // MaxAU = ROWS(AUInfo) - 1
-   MaxAU = MAX(initialAU)
    VolScale = 100
 
    MaxVolPerHa = 710
-   MinYieldSalvagePerHa = 25
-   NumGSCategories = ROWS(GSCategories)
-   MaxActiveOAs = 10000
 
    NumAC = 6
    ACSize = 20
    NumAgeClasses = (MaxStandAge / ACSize) + 1
-
-   ///////// Logging /////////////////////////
-   PotBlockSizeBound = 30000 // AF had set at 10000 Mar 2010: upper bound on max potential block size (to limit max. value in raster; increase if needed)
 
    ///////// Disturbance /////////////////////////
    MaxTimeSinceDisturbance = 400
@@ -128,18 +116,9 @@ Spatial Variables:
 
    StandType[3]
 
-
    ///////// Inventory /////////////////////////
-   AU[MaxAU] <- initialAU
    VolPerHa[VolScale * MaxVolPerHa + 1]
    SalvageableVolume[MaxVolPerHa * HaPerCell + 1]
-   PotentialTreatmentType[4]
-   OperatingArea[MaxActiveOAs]
-
-   ///////// Logging /////////////////////////
-   Logged[MaxTimeSinceDisturbance]
-   MaxPotBlockSize[PotBlockSizeBound] // Mar 2010: layer to record maximum potential block size for each cell
-   BlockId[100]
 
    ///////// Disturbance /////////////////////////
    LastDisturbance[NumDisturbanceAgents+1]
@@ -147,9 +126,6 @@ Spatial Variables:
    // Fire
    FBPFuels[11] // ? CAN THIS BE MOVED TO A COMPONENT
    Burnt[MaxTimeSinceDisturbance]
-
-
-
 
 // ###########################################
 // ## General constant values and tables
@@ -194,9 +170,6 @@ Global Constants:
    rHostSeconds = 14
    ///////// Inventory /////////////////////////
 
-   // Volume and height tables
-   MaxDecade = VolCols - 1
-
    // AC Target Types (ways to achieving Target AC)
    rACStrictLocal = 0
    rACStrictReserveOlder = 1
@@ -205,16 +178,6 @@ Global Constants:
    // salvage volume categories 
    Salvageable = 0
    Lost = 1
-
-   ///////// Logging /////////////////////////
-   AAC = $inputFiles$\$AACFile$.txt
-   MaxAACDecade = COLS(AAC) - 1
-
-   BlockClassSize = 50 //20 // for 20-year classes, starting at 0-19, then 20-39,...  
-   NumBlockClasses = 200 // 50 number of classes that you want to output
-
-
-   ///////// Roading /////////////////////////
 
    ///////// Disturbance /////////////////////////
    ///////////////////////////
@@ -236,8 +199,6 @@ Global Constants:
    rSizeBasedFire = 0
    rDurationBasedFire = 1
   
-
-
 Global Variables:
    // ###########################################
    // ## Parameters: global variables input to the model (not changed within the model)
@@ -337,32 +298,6 @@ Global Variables:
    // Amount of harvest reduction set by each natural disturbance agent
    // NOTE: Be careful not to mix area and volume based approaches
    NumCellsAvailable = 0
-   GrowingStockByZone[NumManagementZones+1] = 0
-
-   SizeByClass[NumAgeClasses] = 0
-
-   // For AC zone
-   SurplusByYear[MaxStandAge+1] = 0
-   SurplusByAC[NumAgeClasses+1] = 0
-
-   ///////// Logging /////////////////////////
-   AnnualHarvestTarget = 0 OFF
-   VolHarvestedForYear[2] = 0  // Green and salvaged separated
-   AreaHarvestedForYear[2] = 0 // Green and salvaged separated
-   AreaAccessedForYear = 0
-   SumOfAgeForYear[3] = 0      // Green and salvaged (prev age/curr age) separated
-
-   AnnualHarvestTargetByZone[NumManagementZones+1] = 0
-   VolumeHarvestedByZone[NumManagementZones+1] = 0
-   AreaHarvestedByZone[NumManagementZones+1] = 0
-   AreaAccessedByZone[NumManagementZones+1] = 0
-   AgeHarvestedByZone[NumManagementZones+1] = 0
-
-   AreaHarvestedByStandType[4] = 0
-   HarvestProfile[NumSppCodes] = 0   // Harvest profile
-
-   BlockSizeDist[NumBlockClasses, NumLandUnits] = 0
-   BlockSizeArea[NumBlockClasses, NumLandUnits] = 0
 
    ///////// Disturbance /////////////////////////
    VolDisturbed[NumDisturbanceAgents+1] = 0
@@ -374,7 +309,6 @@ Global Variables:
    NumSelectedDisturbPatches[NumDisturbanceAgents+1] = 0
 
    VolumeUnsalvaged[NumDisturbanceAgents+1, 2] = 0   
-
 
 // ###########################################
 // ## Add-on components are defined by including appropriate sub-models
@@ -389,11 +323,8 @@ Output Frequency: 10 // Number of time steps between screen refreshes
 Output Model Frequency:
    Burnt Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
 //   Species Freq: ReportingInterval Directory: "cell" Type: grass compressed relative
-   Logged Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
-//   MaxPotBlockSize Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
 
    // Needed for carbon analysis
    StandAge Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
    AU Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
    LastDisturbance Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
-

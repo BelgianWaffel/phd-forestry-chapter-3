@@ -37,13 +37,13 @@ FireProbUnburned = 0, 0
 //  Set harvest parameters 
 // ############################################################################ //
 // Area-based harvest
-AreaBasedHarvest = TRUE
-PercentBasedHarvest = TRUE
+AreaBasedHarvest = FALSE
+PercentBasedHarvest = FALSE
 
 SetManagementZone = 0, 0, 0  // can be three different mgmt types at different times during simulation
 SetManagementZoneSched = 0, 0, 0  // indicates number of years (consecuative) of each mgmt. type listed above.
 
 BlockSizeMin = 500  // cutblock size
 BlockSizeMax = 2000 // 200ha = max allowed in QC
-AACMult = 1//0.65  // area based AAC (percentage of landbase)
+AACMult = 1 //0.65  // area based AAC (percentage of landbase)
 

@@ -88,8 +88,6 @@ RETURNTIME
    RETURNTIME = IF (Time EQ 0) THEN 0.7 ELSE BaseTimestep 
 
    // Clear tracking variables
-   VolumeBurnedByZone [=] 0
-   AreaBurnedByZone [=] 0
    AreaBurnedByLandUnit [=] 0
 
    VolDisturbed[rFire] = 0
@@ -194,8 +192,6 @@ TRANSITIONS
    //////////////////////////////////////////////////////////////////////////////////////////////////////////
  
    // Increment the yearly volume and areas Burnt
-   VolumeBurnedByZone[ManagementZone] = VolumeBurnedByZone[ManagementZone] + Yield
-   AreaBurnedByZone[ManagementZone] = AreaBurnedByZone[ManagementZone] + HaPerCell
    AreaBurnedByLandUnit[LandUnit] = AreaBurnedByLandUnit[LandUnit] + HaPerCell
    VolDisturbed[rFire] = VolDisturbed[rFire] + Yield
    AreaDisturbed[rFire,rTotalDisturbed] = AreaDisturbed[rFire,rTotalDisturbed] + HaPerCell

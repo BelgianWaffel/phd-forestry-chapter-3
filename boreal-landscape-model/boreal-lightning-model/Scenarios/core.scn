@@ -5,7 +5,6 @@ SELES Scenario
 // ############################################################################ //
 Scenario: ..\Model\coreInputs.scn
 
-
 // ############################################################################ //
 // Load unique input layers for this scenario
 // Use same format as in coreInputs.scn
@@ -28,23 +27,18 @@ $PatchMetricsSubModel$ = SubModel_0  // no patch metrics
 
 // Set external variables for input tables (will have a .txt extension)
 $SppSuccessionFile$ = SppSuccession //_noSucc
-$SymmetricIncreasFile$ = SymmetricIncrease //_noSucc
+$SymmetricIncreaseFile$ = SymmetricIncrease //_noSucc
 $ContagionFile$ = Contagion //_noSucc
-
-$AACFile$ = AACAreaPct
-
 
 // ############################################################################ //
 // Load model
 // ############################################################################ //
 
-Model Dimensions: LandUnit
+ Model Dimensions: LandUnit
 ..\Model\BLM.sel
-
 
 Minimize Static
 Tile
-
 
 // ############################################################################ //
 // Load core parameter default settings
@@ -60,8 +54,7 @@ Scenario: ..\Model\coreParameterDefaults.scn
 BaseTimestep = 5
 
 // Turn off Succession
-ApplySppSuccession = FALSE //TRUE
-
+ApplySppSuccession = TRUE
 
 // Set fire parameters
 FireModelType = rSizeBasedFire //rSimpleEmpiricalFire
@@ -69,12 +62,10 @@ FireModelType = rSizeBasedFire //rSimpleEmpiricalFire
 FireMeanSize = 200 // now means mean duration (mean radius in 100m; 25 gives around 130 year return time)
 FireMeanNumPerDecade = 12
 
-
 //  Set harvest parameters 
 // Area-based harvest
-AreaBasedHarvest = TRUE
-PercentBasedHarvest = TRUE
-
+AreaBasedHarvest = FALSE
+PercentBasedHarvest = FALSE
 
 // ############################################################################ //
 // Create output folders
@@ -87,5 +78,3 @@ mkdir cellhd
 // Run simulation. If there is no SimStart command, then simulations must be run manually
 //   SimStart 105 1
 // ############################################################################ //
-
-
