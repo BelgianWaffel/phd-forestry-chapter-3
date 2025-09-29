@@ -5,7 +5,7 @@ SELES Scenario
 // Set general parameters
 // ############################################################################ //
 BaseTimestep = 5
-ReportingInterval = -1 //50 //-1 for no output
+ReportingInterval = 5 //50 //-1 for no output
 
 // Turn on Succession
 ApplySppSuccession = TRUE

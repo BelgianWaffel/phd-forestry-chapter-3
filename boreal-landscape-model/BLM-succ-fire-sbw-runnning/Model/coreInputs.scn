@@ -1,0 +1,23 @@
+SELES Scenario
+$gisData$ = ..\gisData\cell
+$cats$ = $gisData$\..\cats
+$inputFiles$ = ..\inputFiles
+
+$FireEventName$ = SimpleFire  // SimpleFire or FireFBP
+$SBWSubModel$ = SubModel_noSBW
+$PatchMetricsSubModel$ = SubModel_0
+
+LandUnit = $gisData$\landUnit
+Ecoregion = $gisData$\Ecoregion
+
+SuccessionGroup = $gisData$\serieEvolGrouping
+
+initialAge = $gisData$\ageDominant
+initialSpp = $gisData$\treeSpp
+initialAU = $gisData$\AU
+
+// Set external variables for input tables
+$SppSuccessionFile$ = SppSuccession
+$SymmetricIncreasFile$ = SymmetricIncrease
+$ContagionFile$ = Contagion
+

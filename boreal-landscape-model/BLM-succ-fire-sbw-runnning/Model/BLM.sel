@@ -1,0 +1,333 @@
+Seles Model
+Time Units: Years Century 100 300
+
+External Variables:
+
+   // Folders
+   $cats$ = "..\gisData\cats"
+   $inputFiles$ = "..\inputFiles"
+
+   // Sub-model file names: used to include "add on" compoents
+   $SBWSubModel$ = SubModel_SBW
+   $PatchMetricsSubModel$ = SubModel_0
+
+   // Landscape event file names
+   $FireEventName$ = SimpleFire  // SimpleFire or FireFBP
+
+   // Input file names
+   $SppSuccessionFile$ = SppSuccession
+   $SymmetricIncreaseFile$ = SymmetricIncrease
+   $ContagionFile$ = "Contagion"
+
+   $AACFile$ = "AAC"
+
+Landscape Events:
+   // Succession events 
+   Succession.lse DEBUG
+
+   // Natural disturbance events
+   $FireEventName$.lse DEBUG
+
+// ###########################################
+// ## Legends: defined sets of constants
+// ###########################################
+Legends:
+   SppLegend = "$cats$\treeSpp"
+   SppCodes = "$inputFiles$\Succession\SppCodes.txt"
+   LandUnitLegend = "$cats$\landunit"
+   SuccGroupLegend = "$cats$\serieEvolGrouping"
+   SerieEvolLegend = "$cats$\SerieEvol"
+
+   FBPFuelsLegend = "..\cats\FBPFuels"
+
+
+// ###########################################
+// ## Rasters that do not change within the model (static)
+// ###########################################
+Spatial Constants:
+   ///////// General /////////////////////////
+   StudyArea = LandUnit
+   LandUnit
+   Ecoregion
+
+   ///////// Succession /////////////////////////
+   SuccessionGroup
+
+// ###########################################
+// ## Constants and parameters needed to define bounds for spatial variables and arrays
+// ###########################################
+Global Constants:
+
+   ///////// General /////////////////////////
+   CellWidth = CELL WIDTH(LandUnit)
+   HaPerCell = (CellWidth^2) / 10000
+  
+   ///////// Succession /////////////////////////
+   MaxStandAge = 300
+   NumSppCodes = ROWS(SppLegend) //ROWS(SppLookup)
+   NumSppLeadCodes = ROWS(SppCodes)
+
+   Coniferous = 1
+   Conifer    = 1
+   Mixedwood  = 2
+   Mixed      = 2
+   Deciduous  = 3
+   Decid      = 3
+
+   ///////// Inventory /////////////////////////
+   VolScale = 100
+
+   MaxVolPerHa = 710
+   MaxAU = MAX(initialAU)
+   NumAC = 6
+   ACSize = 20
+   NumAgeClasses = (MaxStandAge / ACSize) + 1
+
+   ///////// Disturbance /////////////////////////
+   MaxTimeSinceDisturbance = 400
+
+   // Number of disturbance types
+   NumDisturbanceAgents = 3  // don't count logging (why?)
+   rLogged = 0
+   rFire = 1
+   rSBW1 = 2
+   rSBW2 = 3
+   rSBW3 = 4
+
+
+// ###########################################
+// ## Dynamic rasters
+// ###########################################
+// Note: bounds are only needed if they differ from the initial state or if there is no initial state
+Spatial Variables:
+
+   ///////// Succession /////////////////////////
+   StandAge[-1, MaxStandAge] <- initialAge
+   PreDisturbanceAge[-1, MaxStandAge] <- initialAge
+
+   Species[NumSppCodes] <- initialSpp 
+   PreDisturbanceSpp[NumSppCodes] <- initialSpp
+
+   NextTransAge[MaxStandAge] // For trajectories (main cohort)
+   NextTransYr[300]
+   TransTrajectory[-1]
+   NumTrans[NumAC]
+   PctCohort2[100] <- 0 // Default: 0 (no 2nd cohort)
+
+   StandType[3]
+
+   ///////// Inventory /////////////////////////
+   VolPerHa[VolScale * MaxVolPerHa + 1]
+   SalvageableVolume[MaxVolPerHa * HaPerCell + 1]
+   AU <- initialAU
+   AU[MaxAU] <- initialAU
+
+   ///////// Disturbance /////////////////////////
+   LastDisturbance[NumDisturbanceAgents+1]
+
+   // Fire
+   FBPFuels[11] // ? CAN THIS BE MOVED TO A COMPONENT
+   Burnt[MaxTimeSinceDisturbance]
+
+// ###########################################
+// ## General constant values and tables
+// ###########################################
+Global Constants:
+   ///////// General /////////////////////////
+   NumLandUnits = ROWS(LandUnitLegend)
+
+   ///////// Succession /////////////////////////
+
+   // Probability of a species being leading or secondary in ITG (row: spp, col: BEC) and
+   // compatible combinations of leading and secondary (row: lead; col: secondary)
+   pTreeSpp = "$inputFiles$\Succession\$SppSuccessionFile$.txt"  // original
+   SppTranslate = 8
+   NumSuccRows = ROWS(pTreeSpp)
+   NumSuccGrps = MAX(SuccessionGroup) + 1
+
+   // Increase in in and out transitions in each period by ITG, Bec
+   pSymmetricIncrease = "$inputFiles$\Succession\$SymmetricIncreaseFile$.txt"
+
+   // Contagion Table
+   SppContagion = "$inputFiles$\Succession\$ContagionFile$.txt"
+
+   // Lookup a leading (col 0) or secondary (col 1) species given an ITG (row)
+   SppLookup = "$inputFiles$\Succession\SppLookup.txt"
+   SppCombine = "$inputFiles$\Succession\SppCombine.txt" 
+
+   // Specify columns from "SppLookup.txt" (should be a legend)
+   rLead = 0
+   rSecondary = 1
+   rStandType = 2
+   rSppSoilClass = 4
+   rFuelAge0 = 5
+   rFuelAge1 = 6
+   rFuelAge2 = 7
+   rFuelPostSBW = 8
+   rHostType = 9
+   postSBWNonHost = 10
+   postSBWHost = 11
+   pctHosts = 12
+   rHostLeads = 13
+   rHostSeconds = 14
+   ///////// Inventory /////////////////////////
+
+   // AC Target Types (ways to achieving Target AC)
+   rACStrictLocal = 0
+   rACStrictReserveOlder = 1
+   rACProbabilistic = 2
+
+   // salvage volume categories 
+   Salvageable = 0
+   Lost = 1
+
+   ///////// Disturbance /////////////////////////
+   ///////////////////////////
+   // Disturbance constants
+   ///////////////////////////
+
+   // LandUnit in columns, parameters in rows
+   LandUnitInfo = "$inputFiles$\landUnitInfo.txt"
+   rFireReturnInterval = 0
+
+   // Used in Fire
+   FuelConstants = "$inputFiles$\Fire\FuelConstants.txt"
+   NumFuelProbs = ROWS(FBPFuelsLegend)
+
+   rTotalDisturbed = 0
+   rForestDisturbed = 1
+
+   // For fire model types: simple size (or area) based empirical or duration based
+   rSizeBasedFire = 0
+   rDurationBasedFire = 1
+  
+Global Variables:
+   // ###########################################
+   // ## Parameters: global variables input to the model (not changed within the model)
+   // ##
+   // ## NOTE: To change for a specic experiment, change in the scenario after loading VLM.sel
+   // ##       DO NOT CHANGE THE DEFAULT VALUES HERE UNLESS A PERMANENT CHANGE IS DESIRED
+   // ###########################################
+
+   ///////// General /////////////////////////
+   BaseTimestep = 5        // Base Time step (in years)
+   ReportingInterval  = -1 // frequency for scheduled output (in years)
+
+   // Changing mgmt zone should be done OUTSIDE the model in a scenario
+   SetManagementZone = 0,0,0
+   SetManagementZoneSched = 0,0,0
+
+
+   ///////// Succession /////////////////////////
+   ApplySppSuccession = FALSE  // Whether to apply species succession or leave species static
+   pTrajContagion = 0.9        // Probability of selecting trajectory from neighbouring cells
+   SeralTransitionYears = 20   // Number of years to fully make a seral transition
+
+   // For Decay info
+   SalvageDecayTime = 2
+   SalvageDecayDelay = 0
+
+   ///////// Inventory /////////////////////////
+   ACType = rACStrictLocal
+
+   IMGrowthIncreaseFactor = 2 // Increase growth in IM by this... (in lieu of having volume tables)
+   MHA_Override = 0 // RDefault: 0 to applhy AU-specific MHA. If > 0, then use as MHA
+
+   // Whether to use hard or soft adjacency
+   // Prob. of logging in an adjacency buffer (set to zero for hard adjacency)
+   pLogInBuffer = 0.01
+   GreenupYears = 15 // Number of years after harvest to apply adjacency
+
+   StripCutMinReentryInterval = 25 // in years
+   StripCutWidth = 50 // in metres (must be a multiple of cell width)
+
+   MinNoEffectDist2Rd = 500  // Range between start of deline in prob.
+   MaxDist2Road = 10000000  // RT changed from 2000 on Andrew's advice
+
+   // For operating areas (clustered harvest)
+   OASizeHa = 25000  // size in ha
+   OATimespan = 20   // years to keep active
+   NumActiveOAs = 5  // number of keep active
+
+   BlockSizeMin = 5
+   BlockSizeMax = 1000
+
+   ///////// Disturbance /////////////////////////
+   // For disturbance level modification. Multiply disturbance parameters by these values. Default: keep same each run
+   FireModelType = rSizeBasedFire // controls whether the model uses simple size-based or duration-based fires
+
+   ApplyFireFuelEffect = FALSE // If TRUE, use estimated fuel types to affect initiation and spread
+   ApplyFireLandUnitEffect = FALSE // If TRUE, pick initiation points based on MFRI for the land unit
+
+   FireMeanNumPerDecade = 10
+
+   FireMeanSize = 2000  // ha. Only for size-based fires (FireModelType = rSizeBasedFire)
+   FireMaxSize = 20000  // ha. Only for size-based fires (FireModelType = rSizeBasedFire)
+
+   FireMeanDuration = 200 // days/steps. . Only for duration-based fires (FireModelType = rDurationBasedFire)
+   FireMaxDuration = 500 // maximum number of days/steps (max radius)
+
+   FireProbUnburned = 0.02, 0.95 // probability of starting an unburned island (1st value) or continuing an unburned island (2nd)
+   MeanISI = 5
+   MinISI = 1
+   MaxISI = 40
+
+   // ###########################################
+   // ## Tracking: global variables used by the model for
+   // ## communicating between events or output
+   // ##
+   // ## For tracking info within an event, define a LOCAL variable in the event
+   // ###########################################
+
+   ///////// General /////////////////////////
+   ForestSize = 0
+   LUSize[NumLandUnits] = 0
+
+   SizeByClass[NumAgeClasses] = 0
+
+   ///////// Succession /////////////////////////
+   SGSize[NumSuccGrps] = 0
+
+   NumSppTrans[NumSppLeadCodes,NumSppLeadCodes] = 0
+
+   SpeciesByLU[NumSppCodes,NumLandUnits] = 0
+   SpeciesLeadByLU[NumSppLeadCodes,NumLandUnits] = 0
+   SpeciesBySG[NumSppCodes,NumSuccGrps] = 0
+   SpeciesLeadBySG[NumSppLeadCodes,NumSuccGrps] = 0
+   StandTypeByLU[4,NumLandUnits+1] = 0
+
+
+   ///////// Inventory /////////////////////////
+   // Amount of harvest reduction set by each natural disturbance agent
+   // NOTE: Be careful not to mix area and volume based approaches
+   NumCellsAvailable = 0
+
+   ///////// Disturbance /////////////////////////
+   VolDisturbed[NumDisturbanceAgents+1] = 0
+   AreaDisturbed[NumDisturbanceAgents+1,3] = 0
+   NumDisturbPatches[NumDisturbanceAgents+1] = 0
+
+   AreaBurnedByLandUnit[NumLandUnits+1] = 0
+   SelectedAreaDisturbed[NumDisturbanceAgents+1] = 0
+   NumSelectedDisturbPatches[NumDisturbanceAgents+1] = 0
+
+   VolumeUnsalvaged[NumDisturbanceAgents+1, 2] = 0   
+
+// ###########################################
+// ## Add-on components are defined by including appropriate sub-models
+//SubModel: SubModel_0.sel
+SubModel: $SBWSubModel$.sel
+SubModel: $PatchMetricsSubModel$.sel
+
+
+Output Frequency: 10 // Number of time steps between screen refreshes
+
+// Used to schedule spatial time series outputs
+Output Model Frequency:
+   Burnt Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
+//   Species Freq: ReportingInterval Directory: "cell" Type: grass compressed relative
+
+   // Needed for carbon analysis
+   StandAge Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   AU Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   LastDisturbance Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
