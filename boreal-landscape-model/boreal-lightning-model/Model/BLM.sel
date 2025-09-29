@@ -119,7 +119,7 @@ Spatial Variables:
    ///////// Inventory /////////////////////////
    VolPerHa[VolScale * MaxVolPerHa + 1]
    SalvageableVolume[MaxVolPerHa * HaPerCell + 1]
-
+   AU <- initialAU
    ///////// Disturbance /////////////////////////
    LastDisturbance[NumDisturbanceAgents+1]
 
@@ -281,6 +281,7 @@ Global Variables:
    ForestSize = 0
    LUSize[NumLandUnits] = 0
 
+   SizeByClass[NumAgeClasses] = 0
 
    ///////// Succession /////////////////////////
    SGSize[NumSuccGrps] = 0
@@ -325,6 +326,6 @@ Output Model Frequency:
 //   Species Freq: ReportingInterval Directory: "cell" Type: grass compressed relative
 
    // Needed for carbon analysis
-   StandAge Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
-   AU Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
-   LastDisturbance Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
+   StandAge Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   AU Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   LastDisturbance Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
