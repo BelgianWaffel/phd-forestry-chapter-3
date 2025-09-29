@@ -1,0 +1,29 @@
+<PAMDataset>
+  <PAMRasterBand band="1">
+    <CategoryNames>
+      <Category></Category>
+      <Category> Coniferous</Category>
+      <Category> Mixed</Category>
+      <Category> Deciduous</Category>
+    </CategoryNames>
+    <GDALRasterAttributeTable>
+      <FieldDefn index="0">
+        <Name>Categories</Name>
+        <Type>2</Type>
+        <Usage>2</Usage>
+      </FieldDefn>
+      <Row index="0">
+        <F></F>
+      </Row>
+      <Row index="1">
+        <F> Coniferous</F>
+      </Row>
+      <Row index="2">
+        <F> Mixed</F>
+      </Row>
+      <Row index="3">
+        <F> Deciduous</F>
+      </Row>
+    </GDALRasterAttributeTable>
+  </PAMRasterBand>
+</PAMDataset>

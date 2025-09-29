@@ -324,10 +324,18 @@ Output Frequency: 10 // Number of time steps between screen refreshes
 
 // Used to schedule spatial time series outputs
 Output Model Frequency:
-   Burnt Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
-//   Species Freq: ReportingInterval Directory: "cell" Type: grass compressed relative
-
-   // Needed for carbon analysis
-   StandAge Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
-   AU Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
-   LastDisturbance Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   StandType           Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   AU                  Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   NumTrans            Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   VolIncLoss1         Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   VolIncLoss2         Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   Species             Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   PreDisturbanceAge   Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   PreDisturbanceAge2  Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   FBPFuels            Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   SBWMortality        Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   AttackedSB          Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   VolPerHa            Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   Burnt               Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative   // already present; keep
+   StandAge            Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative             // already present; keep
+   LastDisturbance     Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative             // already present; keep

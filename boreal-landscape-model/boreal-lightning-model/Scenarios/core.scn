@@ -38,6 +38,30 @@ $ContagionFile$ = Contagion //_noSucc
 ..\Model\BLM.sel
 
 Minimize Static
+// hide unnecessary dynamic views
+Minimize Initial State  // hides initialAU, initialSpp, initialAge
+Minimize StandType 
+Minimize StandAge2
+Minimize NumTrans2
+Minimize PctCohort2
+Minimize TransTrajectory
+Minimize TransTrajectory2
+Minimize SRD
+Minimize Z
+Minimize SalvageableVolume
+Minimize NRD
+Minimize Species2
+Minimize NextTransAge
+Minimize N
+Minimize PreDisturbanceSpp
+Minimize PreDisturbanceSpp2
+Minimize PreDisturbanceAge2
+Minimize VollncLoss1
+Minimize VolIncLoss2
+Minimize NextTransYr
+Minimize NextTransYr2
+Minimize BDP
+Minimize NextTransAge2
 Tile
 
 // ############################################################################ //
@@ -55,7 +79,6 @@ BaseTimestep = 5
 
 // Turn off Succession
 ApplySppSuccession =FALSE
-
 // Set fire parameters
 FireModelType = rSizeBasedFire //rSimpleEmpiricalFire
 
