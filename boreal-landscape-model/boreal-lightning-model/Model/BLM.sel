@@ -324,7 +324,7 @@ Output Frequency: 10 // Number of time steps between screen refreshes
 
 // Used to schedule spatial time series outputs
 Output Model Frequency:
-   Burnt Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
+   Burnt Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
 //   Species Freq: ReportingInterval Directory: "cell" Type: grass compressed relative
 
    // Needed for carbon analysis

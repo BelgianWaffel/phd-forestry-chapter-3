@@ -1,0 +1,177 @@
+LSEVENT: BDP
+
+DEFINITIONS
+
+   LAYER: StandAge, Ecoregion, Species, Species2    // Input layers
+   LAYER: StudyArea, SRD , PctCohort2 , StandAge2 //, Epicentre
+   LAYER: AttackedSB, SBWMortality, VolIncLoss1, VolIncLoss2
+
+   LAYER: N, Z, NRD, BDP // Output layers  -- > BDP being the most important
+
+   GLOBAL CONSTANT: MaxN, MaxZ, MaxMean100
+   GLOBAL CONSTANT: SRDLookup[], CellWidth, SppLookup[]
+
+   GLOBAL CONSTANT: sBb, sPe, sPg, sE, sS, sMe, sC, sUnk
+   
+   GLOBAL VARIABLE: BaseTimestep, inOutbreak, AreaDefoliated , SBWSched[], SBWDur[], LocalProb[]
+   GLOBAL VARIABLE: SBWSchedIndex // outbreak index.
+
+   GLOBAL VARIABLE: Radius
+
+   LOCAL: k, kReal, NW 
+ENDDEF
+
+
+INITIALSTATE
+   INITIALSTATE = 1
+
+   OVER REGION WHOLE MAP
+   DECISION (StudyArea > 0)
+      AttackedSB = 0
+      SBWMortality = 0
+      PctCohort2 = 0
+      VolIncLoss1 = 0
+      VolIncLoss2 = 0
+   END
+
+  AreaDefoliated = 0
+  SBWSchedIndex = 1
+ENDIS
+
+RETURNTIME
+
+   RETURNTIME = IF Time EQ 0 THEN 0.1 ELSE BaseTimestep
+
+   // ##############################################################################
+
+   // Go to index with local index
+   
+   xk =LocalProb[SBWSchedIndex]
+   WHILE (xk <= 0)
+      SBWSchedIndex = IF (SBWSched[SBWSchedIndex] > 0) THEN (SBWSchedIndex + 1) ELSE SBWSchedIndex 
+       xk =IF ((SBWSched[SBWSchedIndex +1]) EQ 0 ) THEN 1 ELSE LocalProb[SBWSchedIndex]
+   END
+
+   startTime = SBWSched[SBWSchedIndex]
+   endTime = startTime + SBWDur[SBWSchedIndex]
+
+   //LocalProb  = (75 > UNIFORM(0, 100))
+
+   inOutbreak = IF ((Time >= startTime) AND (Time < endTime)) THEN 1 ELSE 0
+      
+   // ##############################################################################
+
+   IF (inOutbreak EQ 0) 
+      IF (Time > endTime)
+         SBWSchedIndex = IF (SBWSched[SBWSchedIndex] > 0) THEN (SBWSchedIndex + 1) ELSE SBWSchedIndex 
+      END      
+   ELSE 
+
+   //  1) --> Calculate Site Resource Dominance (SRD)  
+      OVER REGION WHOLE MAP
+      DECISION (StudyArea > 0) AND (Species > 0)
+
+      // Here we assume that only the dominant cohort influences SRD
+
+         AgeStand = IF (PctCohort2 >50)  THEN StandAge2 ELSE StandAge
+         SpeciesStand = IF (PctCohort2 >50)  THEN Species2 ELSE Species  
+
+         LeadSpp = SppLookup[SpeciesStand, 0]
+         SecondSpp = SppLookup[SpeciesStand, 1]
+
+         //  Tanslate species at each location to meaningful host values 
+         //  for calculating SRD based on weighted mean of lead and 
+         //  secondary species.  See SRD_Simple.txt input file.
+         //////////////////////////////////////////////////////////
+         IF (LeadSpp EQ sE)
+            idLead=3
+         ELSE IF (LeadSpp EQ sS)
+            idLead=2
+         ELSE 
+            idLead=1
+         END
+
+         IF (SecondSpp EQ sE)
+            idSecondary=3
+         ELSE IF (SecondSpp EQ sS)
+            idSecondary=2
+         ELSE 
+            idSecondary=1
+         END
+         //////////////////////////////////////////////////////////
+         // 50 % chance that spruce in northern ecoregion are black spruce, 50% white.
+         IF (Ecoregion EQ 2) AND (UNIFORM(0,1) < 0.5)
+            IF (idLead EQ 3) 
+              idLead = 4  // Black Spruce in northern region
+            END   
+            IF (idSecondary EQ 3) 
+              idSecondary = 4 // Black Spruce in northern region
+            END   
+         END
+
+         SRDLead = IF AgeStand <= 0 THEN 0
+                   ELSE IF AgeStand <= SRDLookup[idLead, 0] THEN 33
+                   ELSE IF AgeStand <= SRDLookup[idLead, 1] THEN 66                   ELSE IF AgeStand<= SRDLookup[idLead, 2] THEN 100
+                   ELSE 0  
+
+         SRDSecondary = IF AgeStand <= 0 THEN 0
+                        ELSE IF AgeStand <= SRDLookup[idSecondary, 0] THEN 33
+                        ELSE IF AgeStand <= SRDLookup[idSecondary, 1] THEN 66                        ELSE IF AgeStand<= SRDLookup[idSecondary, 2] THEN 100
+                        ELSE 0  
+
+         SRD = ((0.67 * SRDLead) + (0.33 * SRDSecondary))  // Weighted average for SRD
+
+
+      END
+
+   //  2) --> Calculate neighbourhood Resource Dominance (NRD) using the 'brute force' rectangular moving window, weighted by dstance (%&*)
+   //         I can get away with using the brute force to calculate NRD because the window size is small and it allows me to weight the distance.
+   //         Although the efficient window is just that (i.e., efficient) I can't 'get into' the algorithm to weight the locations.
+
+      kReal = MIN(Radius/CellWidth, NUMROWS-1)    // real-valued radius
+      k = MIN(FLOOR(Radius/CellWidth), NUMROWS-1) // integer-valued radius
+
+      OVER REGION WHOLE MAP
+         DECISION StudyArea > 0
+                            
+         centreLocation = Location
+         r = ROW(Location)
+         c = COL(Location)
+         bottom = MAX(0,r-k)
+         left = MAX(0,c-k)
+         top = MIN(NUMROWS-1, r+k)
+         right = MIN(NUMCOLS-1,c+k)
+
+         n = 0
+         z = 0
+         OVER REGION RECT(bottom, left, top, right) 
+            DECISION StudyArea > 0
+         
+            dist = ROUND(DISTANCE(centreLocation, Location))
+            Gauss = EXP(-1 * ( (dist^2) / (Radius/2)^2) )  // (%&*) // gaussian radial distance function from Sturtevant et al (2004) for Orr (1996)
+
+            n = n + 1
+            z = z + Gauss*SRD
+         END
+
+         N = MIN(MaxN, n)
+         Z = MIN(MaxZ, z)
+         NRD = IF (n > 0) THEN MIN(MaxMean100, ROUND(z/n)) ELSE 0  // NRD is between 0 and 100
+         Visited = 3
+      END
+
+   //  3) --> Calculate Biological Disturbance Probability (BDP) using eqn. 2 from LANDIS II BDA guide (2005)
+
+      NW = 0.5 // makes the weight approx 67% SRD, and 33% NRD // NW = 1 gives mean of the two values
+
+      OVER REGION WHOLE MAP  
+         DECISION ((StudyArea >0) AND (SRD > 0) AND (NRD > 0))
+         BDP = ROUND(MIN(((SRD +(NRD * NW))/(1+NW)), 100)) // EQN. 2 from Sturtevant et al. 2004 >> PJ
+      END
+
+//  4) --> Mask BDP values without host.  
+       // --> taken care of above.
+   END
+
+ENDRT
+
