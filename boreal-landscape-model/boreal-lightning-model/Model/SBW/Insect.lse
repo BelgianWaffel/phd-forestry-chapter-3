@@ -3,7 +3,7 @@ LSEVENT: Insect
 DEFINITIONS
    LAYER: StandAge, Ecoregion, Species, Species2  //, Host    // Input layers
    LAYER: StudyArea, PctCohort2 , StandAge2 
-   LAYER: PctDefol, LastDisturbance, AttackedSB, PreDisturbanceAge, SBWMortality 
+   LAYER: LastDisturbance, AttackedSB, PreDisturbanceAge, SBWMortality //, PctDefol 
 
    LAYER: VolIncLoss1, VolIncLoss2
 

@@ -22,7 +22,7 @@ Scenario: ..\Model\coreInputs.scn
 $FireEventName$ = SimpleFire  // SimpleFire or FireFBP
 
 // Sub-model (add-on) files (will have a .sel extension)
-$SBWSubModel$ = SubModel_noSBW       // no spruce budworm or 2nd cohort
+$SBWSubModel$ = SubModel_SBW       // no spruce budworm or 2nd cohort
 $PatchMetricsSubModel$ = SubModel_0  // no patch metrics
 
 // Set external variables for input tables (will have a .txt extension)
@@ -61,6 +61,11 @@ FireModelType = rSizeBasedFire //rSimpleEmpiricalFire
 
 FireMeanSize = 200 // now means mean duration (mean radius in 100m; 25 gives around 130 year return time)
 FireMeanNumPerDecade = 12
+
+//  Set harvest parameters 
+// Area-based harvest
+// AreaBasedHarvest = FALSE
+// PercentBasedHarvest = FALSE
 
 // ############################################################################ //
 // Create output folders

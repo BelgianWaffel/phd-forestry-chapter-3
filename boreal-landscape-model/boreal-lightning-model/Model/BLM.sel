@@ -8,7 +8,7 @@ External Variables:
    $inputFiles$ = "..\inputFiles"
 
    // Sub-model file names: used to include "add on" compoents
-   $SBWSubModel$ = SubModel_noSBW
+   $SBWSubModel$ = SubModel_SBW
    $PatchMetricsSubModel$ = SubModel_0
 
    // Landscape event file names
@@ -324,7 +324,7 @@ Output Frequency: 10 // Number of time steps between screen refreshes
 
 // Used to schedule spatial time series outputs
 Output Model Frequency:
-   Burnt Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   Burnt Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
 //   Species Freq: ReportingInterval Directory: "cell" Type: grass compressed relative
 
    // Needed for carbon analysis
