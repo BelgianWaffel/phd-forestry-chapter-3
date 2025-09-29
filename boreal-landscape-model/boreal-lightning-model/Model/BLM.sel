@@ -78,7 +78,7 @@ Global Constants:
    VolScale = 100
 
    MaxVolPerHa = 710
-
+   MaxAU = MAX(initialAU)
    NumAC = 6
    ACSize = 20
    NumAgeClasses = (MaxStandAge / ACSize) + 1
@@ -120,6 +120,8 @@ Spatial Variables:
    VolPerHa[VolScale * MaxVolPerHa + 1]
    SalvageableVolume[MaxVolPerHa * HaPerCell + 1]
    AU <- initialAU
+   AU[MaxAU] <- initialAU
+
    ///////// Disturbance /////////////////////////
    LastDisturbance[NumDisturbanceAgents+1]
 
