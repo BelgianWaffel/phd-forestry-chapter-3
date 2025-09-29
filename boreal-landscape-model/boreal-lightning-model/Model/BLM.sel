@@ -336,6 +336,6 @@ Output Model Frequency:
    SBWMortality        Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
    AttackedSB          Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
    VolPerHa            Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
-   Burnt               Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative   // already present; keep
-   StandAge            Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative             // already present; keep
-   LastDisturbance     Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative             // already present; keep
+   Burnt               Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative   
+   StandAge            Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative             
+   LastDisturbance     Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative           
