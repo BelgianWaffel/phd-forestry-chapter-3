@@ -1,8 +1,0 @@
-Zone	Decade0	Decade1
-rSQ	0.85	0.85
-rAC	0.85	0.85
-rStripCut	0.85	0.85
-rEM	0.85	0.85
-rIM	2	2
-rMosaic	0.85	0.85
-rPA	0	0

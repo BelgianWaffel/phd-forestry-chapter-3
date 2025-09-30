@@ -19,7 +19,7 @@ Scenario: ..\Model\coreInputs.scn
 // ############################################################################ //
 
 // Alternate landscape event file names (must refer to a valid landscape event)
-$FireEventName$ = SimpleFire  // SimpleFire or FireFBP
+$FireEventName$ = FireFBP  // SimpleFire or FireFBP
 
 // Sub-model (add-on) files (will have a .sel extension)
 $SBWSubModel$ = SubModel_SBW       // no spruce budworm or 2nd cohort

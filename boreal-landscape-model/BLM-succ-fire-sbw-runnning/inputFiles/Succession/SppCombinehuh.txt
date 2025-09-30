@@ -1,9 +1,0 @@
-LeadID	sBb	sPe	sE	sPg	sS	sMe	sC	sUnk
-sBb	Bb	BbPe	BbE	BbPg	BbS	BbMe	BbC	Bb
-sPe	PeBb	Pe	PeE	PePg	PeS	PeMe	PeC	Pe
-sE	EBb	EPe	E	EPg	ES	EMe	EC	E
-sPg	PgBb	PgPe	PgE	Pg	PgS	PgMe	PgC	Pg
-sS	SBb	SPe	SE	SPg	S	SMe	SC	S
-sMe	MeBb	MePe	MeE	MePg	MeS	Me	MeC	Me
-sC	CBb	CPe	MeC	CPg	CS	CMe	C	C
-sUnk	Bb	Pe	E	Pg	S	Me	C	Unk

@@ -1,1 +1,0 @@
-Run	Year	MgmtZoneId	MgmtZone	CategoryId	Category	NetArea	TotalArea

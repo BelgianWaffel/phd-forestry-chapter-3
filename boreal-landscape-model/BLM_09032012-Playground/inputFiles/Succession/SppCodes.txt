@@ -1,9 +1,0 @@
-SppId  CodeName
-0: sBb
-1: sPe
-2: sE
-3: sPg
-4: sS
-5: sMe
-6: sC
-7: sUnk
