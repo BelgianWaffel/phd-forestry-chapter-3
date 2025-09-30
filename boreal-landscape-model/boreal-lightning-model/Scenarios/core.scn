@@ -27,7 +27,7 @@ $PatchMetricsSubModel$ = SubModel_0  // no patch metrics
 
 // Set external variables for input tables (will have a .txt extension)
 $SppSuccessionFile$ = SppSuccession //_noSucc
-$SymmetricIncreaseFile$ = SymmetricIncrease //_noSucc
+$SymmetricIncreasFile$ = SymmetricIncrease //_noSucc
 $ContagionFile$ = Contagion //_noSucc
 
 // ############################################################################ //
@@ -78,7 +78,7 @@ Scenario: ..\Model\coreParameterDefaults.scn
 BaseTimestep = 5
 
 // Turn off Succession
-ApplySppSuccession =FALSE
+ApplySppSuccession = TRUE
 // Set fire parameters
 FireModelType = rSizeBasedFire //rSimpleEmpiricalFire
 

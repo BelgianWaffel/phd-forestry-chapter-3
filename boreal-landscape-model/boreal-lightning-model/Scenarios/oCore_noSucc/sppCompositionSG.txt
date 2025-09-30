@@ -1,1 +1,0 @@
-Run	Year	SEGroup	Species	pSpp	Area

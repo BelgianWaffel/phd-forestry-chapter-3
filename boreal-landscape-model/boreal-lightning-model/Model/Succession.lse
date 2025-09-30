@@ -41,8 +41,8 @@ DEFINITIONS
    // INPUT STATE - dynamic in other events
    /////////////////////////////////////////////////
    LAYER: LastDisturbance  // type of last disturbance
-   GLOBAL CONSTANT: rSBW1, rSBW2, rSBW3, rFire //, rLogged
-   LAYER: Burnt, AttackedSB, SBWMortality, PctCohort2 //, Logged
+   GLOBAL CONSTANT: rSBW1, rSBW2, rSBW3, rFire 
+   LAYER: Burnt, AttackedSB, SBWMortality, PctCohort2 
    GLOBAL CONSTANT: MaxTimeSinceDisturbance
    GLOBAL CONSTANT: postSBWNonHost, postSBWHost, pctHosts
 
@@ -351,9 +351,7 @@ PROBINIT
    prevStandAge = StandAge
 
    //## CRITICAL FLAG TO TELL MODEL THAT A DISTURBANCE OCCURRED
-   // timeSinceDisturbance = MaxTimeSinceDisturbance - MAX(Logged,MAX(Burnt, AttackedSB))  
    timeSinceDisturbance = MaxTimeSinceDisturbance - MAX(Burnt, AttackedSB)
-   Logged = MAX(Logged-BaseTimestep, 0)
    
    // Increment the stand age in years for each forested cell (except in first pass and for recent disturbances)
    IF (FLOOR(Time) > 0) AND (timeSinceDisturbance >= BaseTimestep)
@@ -916,7 +914,7 @@ PROBINIT
                   nLikeNeighbours = 0
 
                   OVER REGION CENTRED(1,1)
-                  DECISION (Species > 0) AND ((MaxTimeSinceDisturbance - MAX(Logged,Burnt)) < BaseTimestep)
+                  DECISION (Species > 0) AND ((MaxTimeSinceDisturbance - MAX(Burnt,AttackedSB)) < BaseTimestep)
                      // Fire/logging are only asking about cohort 1; cohort 2 has no effect or role here.
                      // IF (((PreDisturbanceAge % (SOURCE PreDisturbanceAge) <=10)) AND (SppLookup[PreDisturbanceSpp , 0]  EQ l1))
                      IF (PreDisturbanceSpp EQ (SOURCE PreDisturbanceSpp))
