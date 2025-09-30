@@ -1,8 +1,8 @@
 Run	OutBreakNum	OutBreakStartTime	OutBreakDuration	OutBreakEndTime	OutBreakPeakInterval	LocalOutbreak
-1	1	10	12	22	16	1
-1	2	56	16	72	48	1
-1	3	107	11	118	49	1
-1	4	156	14	170	50	1
-1	5	203	7	210	44	1
-1	6	249	11	260	48	0
-1	7	285	12	297	36	1
+1	1	17	11	28	23	0
+1	2	57	11	68	40	1
+1	3	102	11	113	45	0
+1	4	152	8	160	48	1
+1	5	199	12	211	49	1
+1	6	250	7	257	49	1
+1	7	292	9	301	43	1

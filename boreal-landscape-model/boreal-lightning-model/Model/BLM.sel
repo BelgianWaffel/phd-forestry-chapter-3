@@ -338,4 +338,7 @@ Output Model Frequency:
    VolPerHa            Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
    Burnt               Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative   
    StandAge            Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative             
-   LastDisturbance     Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative           
+   LastDisturbance     Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative   
+   StandType        Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   NextTransYr      Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   NumTrans         Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative        

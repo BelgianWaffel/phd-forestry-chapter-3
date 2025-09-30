@@ -1,0 +1,61 @@
+<PAMDataset>
+  <PAMRasterBand band="1">
+    <CategoryNames>
+      <Category> NonFuel</Category>
+      <Category> C2</Category>
+      <Category> C3</Category>
+      <Category> D1</Category>
+      <Category> S1</Category>
+      <Category> S2</Category>
+      <Category> DS</Category>
+      <Category> M135</Category>
+      <Category> M170</Category>
+      <Category> M375</Category>
+      <Category> M350</Category>
+      <Category> M325</Category>
+    </CategoryNames>
+    <GDALRasterAttributeTable>
+      <FieldDefn index="0">
+        <Name>Categories</Name>
+        <Type>2</Type>
+        <Usage>2</Usage>
+      </FieldDefn>
+      <Row index="0">
+        <F> NonFuel</F>
+      </Row>
+      <Row index="1">
+        <F> C2</F>
+      </Row>
+      <Row index="2">
+        <F> C3</F>
+      </Row>
+      <Row index="3">
+        <F> D1</F>
+      </Row>
+      <Row index="4">
+        <F> S1</F>
+      </Row>
+      <Row index="5">
+        <F> S2</F>
+      </Row>
+      <Row index="6">
+        <F> DS</F>
+      </Row>
+      <Row index="7">
+        <F> M135</F>
+      </Row>
+      <Row index="8">
+        <F> M170</F>
+      </Row>
+      <Row index="9">
+        <F> M375</F>
+      </Row>
+      <Row index="10">
+        <F> M350</F>
+      </Row>
+      <Row index="11">
+        <F> M325</F>
+      </Row>
+    </GDALRasterAttributeTable>
+  </PAMRasterBand>
+</PAMDataset>

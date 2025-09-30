@@ -145,11 +145,17 @@ INITIALSTATE
 
             id = sg * NumAC + Index
 
-            pMakeTransition[id,sppId] = pOut/pOld
-            pMakeTransition2[id,sppId] = pOut/pOld
+            // NPD flagged a potential division by zero below //
 
-            pReceiveTransition[id,sppId] = pIn/100
-            pReceiveTransition2[id,sppId] = pIn/100
+            // pMakeTransition[id,sppId] = pOut/pOld
+            // pMakeTransition2[id,sppId] = pOut/pOld
+            pMakeTransition[id,sppId]  = IF (pOld > 0) THEN (pOut/pOld) ELSE 0
+            pMakeTransition2[id,sppId] = IF (pOld > 0) THEN (pOut/pOld) ELSE 0
+
+            // pReceiveTransition[id,sppId] = pIn/100
+            // pReceiveTransition2[id,sppId] = pIn/100
+            pReceiveTransition[id,sppId]  = MAX(pIn/100, 0)
+            pReceiveTransition2[id,sppId] = MAX(pIn/100, 0)
 
          END
 
@@ -779,14 +785,21 @@ PROBINIT
                      REMOVE ALL(SOURCE TransTrajectory)
                      
                      SOURCE NumTrans = 0
-                     p = HEAD(TransTrajectory)
-                     WHILE(p)
-                        singleTrans2 [=] GET(TransTrajectory, p)
-                        p = NEXT(TransTrajectory,p)
+                     // p = HEAD(TransTrajectory)
+                     // WHILE(p)
+                        // singleTrans [=] GET(TransTrajectory, p) // NPD shouldn't  num 1 be used here, not 2 ???
+                        // p = NEXT(TransTrajectory,p)
                         // Add a new transition
-                        INSERT TAIL(SOURCE TransTrajectory, singleTrans)
-                        SOURCE NumTrans = MIN(SOURCE NumTrans + 1 ,6)
-                     END
+                        // INSERT TAIL(SOURCE TransTrajectory, singleTrans)
+                        // SOURCE NumTrans = MIN(SOURCE NumTrans + 1 ,6)
+                     // END
+                        p = HEAD(TransTrajectory)
+                        WHILE(p)
+                            singleTrans [=] GET(TransTrajectory, p)
+                            p = NEXT(TransTrajectory,p)
+                            INSERT TAIL(SOURCE TransTrajectory, singleTrans)
+                            SOURCE NumTrans = MIN(SOURCE NumTrans + 1 ,6)
+                        END
 
                      // Cohort 2 as well...if it exists
                      IF ((PctCohort2 >0) AND (PreDisturbanceSpp2 EQ SOURCE PreDisturbanceSpp2))
@@ -1050,6 +1063,17 @@ PROBINIT
                   transAge = ROUND(UNIFORM(minTransAge, (ac+1)*ACSize-1))
 
                   singleTrans[0] = transAge
+// Fallback: if probs sum to 0, use receive probs
+tot = 0
+OVER INDEX(1, NumSppCodes-1)
+   tot = tot + pTreeSppVector[Index]
+END
+IF tot <= 0
+   OVER INDEX(1, NumSppCodes-1)
+      pTreeSppVector[Index] = pReceiveTransition[baseIndex + ac, Index]
+   END
+END
+
                   singleTrans[1] = CLASSIFIED_DIST[pTreeSppVector]
      
                   // Add a new transition
@@ -1091,7 +1115,18 @@ PROBINIT
                   minTransAge = MAX(ac*ACSize, transAge + SeralTransitionYears)
                   transAge = ROUND(UNIFORM(minTransAge, (ac+1)*ACSize-1))
                   singleTrans2[0] = transAge
-                  singleTrans2[1] = CLASSIFIED_DIST[pTreeSppVector]
+// Fallback: if probs sum to 0, use receive probs (cohort 2)
+tot2 = 0
+OVER INDEX(1, NumSppCodes-1)
+   tot2 = tot2 + pTreeSppVector2[Index]
+END
+IF tot2 <= 0
+   OVER INDEX(1, NumSppCodes-1)
+      pTreeSppVector2[Index] = pReceiveTransition2[baseIndex2 + ac, Index]
+   END
+END
+
+                  singleTrans2[1] = CLASSIFIED_DIST[pTreeSppVector2] // shouldn't we be using number 2 here??? - NPD
 
                   // Add a new transition
                   INSERT TAIL(TransTrajectory2, singleTrans2)
@@ -1114,14 +1149,26 @@ PROBINIT
          
          // ###########
          // Set up next transition - cohort2
-         IF (PctCohort2 > 0) AND (SIZE(TransTrajectory2) <= 0)
-            NextTransAge2 = 0  // no transitions
+         // IF (PctCohort2 > 0) AND (SIZE(TransTrajectory2) <= 0)
+         //   NextTransAge2 = 0  // no transitions
+         //   NextTransYr2 = 0
+        // ELSE
+          //  singleTrans2 [=] GET HEAD(TransTrajectory2)
+          //  NextTransAge2 = singleTrans2[0]
+          //  NextTransYr2 = CLAMP(NextTransAge2 - StandAge2, 0, 300)
+        // END
+
+        // ###########
+        // NPD - inverted and cleaned version of block above seems most logical ???
+        // Set up next transition - cohort2
+           IF (PctCohort2 > 0) AND (SIZE(TransTrajectory2) > 0)
+             singleTrans2 [=] GET HEAD(TransTrajectory2)
+             NextTransAge2 = singleTrans2[0]
+             NextTransYr2 = CLAMP(NextTransAge2 - StandAge2, 0, 300)
+           ELSE
+             NextTransAge2 = 0
             NextTransYr2 = 0
-         ELSE
-            singleTrans2 [=] GET HEAD(TransTrajectory2)
-            NextTransAge2 = singleTrans2[0]
-            NextTransYr2 = CLAMP(NextTransAge2 - StandAge2, 0, 300)
-         END
+           END
 
       //##############################################################################################################
       // Other years: apply precomputed trajectory
