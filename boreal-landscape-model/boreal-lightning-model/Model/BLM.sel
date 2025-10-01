@@ -12,7 +12,7 @@ External Variables:
    $PatchMetricsSubModel$ = SubModel_0
 
    // Landscape event file names
-   $FireEventName$ = SimpleFire  // SimpleFire or FireFBP
+   $FireEventName$ = FireFBP  // SimpleFire or FireFBP
 
    // Input file names
    $SppSuccessionFile$ = SppSuccession
@@ -24,7 +24,7 @@ External Variables:
 Landscape Events:
    // Succession events 
    Succession.lse DEBUG
-
+   
    // Natural disturbance events
    $FireEventName$.lse DEBUG
 
@@ -37,7 +37,6 @@ Legends:
    LandUnitLegend = "$cats$\landunit"
    SuccGroupLegend = "$cats$\serieEvolGrouping"
    SerieEvolLegend = "$cats$\SerieEvol"
-
    FBPFuelsLegend = "..\cats\FBPFuels"
 
 
@@ -52,6 +51,9 @@ Spatial Constants:
 
    ///////// Succession /////////////////////////
    SuccessionGroup
+
+   ///////// fire //////////////
+   InitFBPFuels
 
 // ###########################################
 // ## Constants and parameters needed to define bounds for spatial variables and arrays
@@ -126,7 +128,8 @@ Spatial Variables:
    LastDisturbance[NumDisturbanceAgents+1]
 
    // Fire
-   FBPFuels[11] // ? CAN THIS BE MOVED TO A COMPONENT
+   FBPFuels[11] <- InitFBPFuels // NPD
+   // FBPFuels[11] // ? CAN THIS BE MOVED TO A COMPONENT
    Burnt[MaxTimeSinceDisturbance]
 
 // ###########################################
@@ -211,7 +214,7 @@ Global Variables:
 
    ///////// General /////////////////////////
    BaseTimestep = 5        // Base Time step (in years)
-   ReportingInterval  = -1 // frequency for scheduled output (in years)
+   ReportingInterval  = BaseTimestep // frequency for scheduled output (in years)
 
    // Changing mgmt zone should be done OUTSIDE the model in a scenario
    SetManagementZone = 0,0,0
@@ -219,7 +222,7 @@ Global Variables:
 
 
    ///////// Succession /////////////////////////
-   ApplySppSuccession = FALSE  // Whether to apply species succession or leave species static
+   ApplySppSuccession = TRUE  // Whether to apply species succession or leave species static
    pTrajContagion = 0.9        // Probability of selecting trajectory from neighbouring cells
    SeralTransitionYears = 20   // Number of years to fully make a seral transition
 
@@ -254,7 +257,7 @@ Global Variables:
 
    ///////// Disturbance /////////////////////////
    // For disturbance level modification. Multiply disturbance parameters by these values. Default: keep same each run
-   FireModelType = rSizeBasedFire // controls whether the model uses simple size-based or duration-based fires
+   FireModelType = rDurationBasedFire // SizeBasedFire // controls whether the model uses simple size-based or duration-based fires
 
    ApplyFireFuelEffect = FALSE // If TRUE, use estimated fuel types to affect initiation and spread
    ApplyFireLandUnitEffect = FALSE // If TRUE, pick initiation points based on MFRI for the land unit
@@ -320,7 +323,7 @@ SubModel: $SBWSubModel$.sel
 SubModel: $PatchMetricsSubModel$.sel
 
 
-Output Frequency: 10 // Number of time steps between screen refreshes
+Output Frequency: 1 // Number of time steps between screen refreshes
 
 // Used to schedule spatial time series outputs
 Output Model Frequency:
@@ -332,7 +335,7 @@ Output Model Frequency:
    Species             Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
    PreDisturbanceAge   Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
    PreDisturbanceAge2  Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
-   FBPFuels            Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
+   FBPFuels            Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
    SBWMortality        Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
    AttackedSB          Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative
    VolPerHa            Freq: ReportingInterval Directory: "cell" Type: GeoTIFF relative

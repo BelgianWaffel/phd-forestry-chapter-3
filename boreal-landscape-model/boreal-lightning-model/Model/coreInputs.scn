@@ -4,12 +4,12 @@ $cats$ = $gisData$\..\cats
 $inputFiles$ = ..\inputFiles
 
 $FireEventName$ = SimpleFire  // SimpleFire or FireFBP
-$SBWSubModel$ = SubModel_noSBW
+$SBWSubModel$ = SubModel_SBW
 $PatchMetricsSubModel$ = SubModel_0
 
 LandUnit = $gisData$\landUnit
 Ecoregion = $gisData$\Ecoregion
-
+InitFBPFuels = $gisData$\InitFBPFuels
 SuccessionGroup = $gisData$\serieEvolGrouping
 
 initialAge = $gisData$\ageDominant

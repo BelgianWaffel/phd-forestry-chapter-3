@@ -23,14 +23,14 @@ DEFINITIONS
    // LandUnit in rows, parameters in columns
    GLOBAL CONSTANT: LandUnitInfo[], rFireReturnInterval
 
-   LAYER: StudyArea, LandUnit, Ecoregion 
+   LAYER: StudyArea, LandUnit, Ecoregion, FBPFuels 
    
    /////////////////////////////////////////////////
    // INPUT STATE - dynamic in other events
    /////////////////////////////////////////////////
    LAYER: Species, Species2, PctCohort2
    GLOBAL VARIABLE: LUSize[]
-
+   
    /////////////////////////////////////////////////
    // FEEDBACK STATE
    /////////////////////////////////////////////////
@@ -40,7 +40,7 @@ DEFINITIONS
    /////////////////////////////////////////////////
    // OUTPUT STATE
    /////////////////////////////////////////////////
-   LAYER: LastDisturbance,  FBPFuels // type of last disturbance
+   LAYER: LastDisturbance // ,  FBPFuels type of last disturbance
    GLOBAL CONSTANT: rFire
 
    // Shows areas recently burned and potential salvageable
@@ -98,8 +98,8 @@ RETURNTIME
    RETURNTIME = IF (Time EQ 0) THEN 0.7 ELSE BaseTimestep 
 
    // Clear tracking variables
-   VolumeBurnedByZone [=] 0
-   AreaBurnedByZone [=] 0
+   // VolumeBurnedByZone [=] 0
+   // AreaBurnedByZone [=] 0
    AreaBurnedByLandUnit [=] 0
 
    VolDisturbed[rFire] = 0
@@ -309,9 +309,9 @@ TRANSITIONS
       LastDisturbance = rFire
       VolPerHa = 0 // No more volume when burned --> but there remains the SalvageableVolume
 
-       // Increment the yearly volume and areas Burnt
-      VolumeBurnedByZone[ManagementZone] = VolumeBurnedByZone[ManagementZone] + Yield
-      AreaBurnedByZone[ManagementZone] = AreaBurnedByZone[ManagementZone] + HaPerCell
+      // Increment the yearly volume and areas Burnt
+      // VolumeBurnedByZone[ManagementZone] = VolumeBurnedByZone[ManagementZone] + Yield
+      // AreaBurnedByZone[ManagementZone] = AreaBurnedByZone[ManagementZone] + HaPerCell
       AreaBurnedByLandUnit[LandUnit] = AreaBurnedByLandUnit[LandUnit] + HaPerCell
       VolDisturbed[rFire] = VolDisturbed[rFire] + Yield
       AreaDisturbed[rFire,rTotalDisturbed] = AreaDisturbed[rFire,rTotalDisturbed] + HaPerCell

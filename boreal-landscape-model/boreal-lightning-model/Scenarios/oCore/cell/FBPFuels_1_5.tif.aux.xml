@@ -2,17 +2,17 @@
   <PAMRasterBand band="1">
     <CategoryNames>
       <Category> NonFuel</Category>
-      <Category> C2</Category>
-      <Category> C3</Category>
-      <Category> D1</Category>
-      <Category> S1</Category>
-      <Category> S2</Category>
-      <Category> DS</Category>
-      <Category> M135</Category>
-      <Category> M170</Category>
-      <Category> M375</Category>
-      <Category> M350</Category>
-      <Category> M325</Category>
+      <Category>   C2      255 0 0</Category>
+      <Category>   C3      255 128 0</Category>
+      <Category>   D1      255 255 0</Category>
+      <Category>   S1      0 200 0</Category>
+      <Category>   S2      0 140 0</Category>
+      <Category>   DS      0 200 200</Category>
+      <Category>   M135    0 120 255</Category>
+      <Category>   M170    0 60 220</Category>
+      <Category>   M375    255 0 255</Category>
+      <Category>  M350    200 0 255</Category>
+      <Category>  M325    120 120 120</Category>
     </CategoryNames>
     <GDALRasterAttributeTable>
       <FieldDefn index="0">
@@ -24,37 +24,37 @@
         <F> NonFuel</F>
       </Row>
       <Row index="1">
-        <F> C2</F>
+        <F>   C2      255 0 0</F>
       </Row>
       <Row index="2">
-        <F> C3</F>
+        <F>   C3      255 128 0</F>
       </Row>
       <Row index="3">
-        <F> D1</F>
+        <F>   D1      255 255 0</F>
       </Row>
       <Row index="4">
-        <F> S1</F>
+        <F>   S1      0 200 0</F>
       </Row>
       <Row index="5">
-        <F> S2</F>
+        <F>   S2      0 140 0</F>
       </Row>
       <Row index="6">
-        <F> DS</F>
+        <F>   DS      0 200 200</F>
       </Row>
       <Row index="7">
-        <F> M135</F>
+        <F>   M135    0 120 255</F>
       </Row>
       <Row index="8">
-        <F> M170</F>
+        <F>   M170    0 60 220</F>
       </Row>
       <Row index="9">
-        <F> M375</F>
+        <F>   M375    255 0 255</F>
       </Row>
       <Row index="10">
-        <F> M350</F>
+        <F>  M350    200 0 255</F>
       </Row>
       <Row index="11">
-        <F> M325</F>
+        <F>  M325    120 120 120</F>
       </Row>
     </GDALRasterAttributeTable>
   </PAMRasterBand>

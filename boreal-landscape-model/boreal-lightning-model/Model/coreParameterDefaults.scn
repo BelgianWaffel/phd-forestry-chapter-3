@@ -18,7 +18,7 @@ pTrajContagion = 0.9
 
 FireModelType = rSizeBasedFire
 
-ApplyFireFuelEffect = FALSE // If TRUE, use estimated fuel types to affect initiation and spread
+ApplyFireFuelEffect = TRUE // If TRUE, use estimated fuel types to affect initiation and spread
 ApplyFireLandUnitEffect = FALSE // If TRUE, pick initiation points based on MFRI for the land unit
 
 FireMeanSize = 200 // mean fire size (ha)
