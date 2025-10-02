@@ -1,2 +1,0 @@
-Index	AC0-19	AC20-39	AC40-59	AC60-79	AC80-99	AC100-120	Species	LandUnit	IndexTranslate
-0	0	0	0	0	0	0	0	0	0

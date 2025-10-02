@@ -1,9 +1,0 @@
-Seles Scenario
-$gisData$ = ..\CaseStudy\gisData\grids
-
-StudyArea = $gisData$\studyArea.tif
-Elevation = $gisData$\elevation.tif
-Spp1 = $gisData$\Spp1.tif
-
-Model Dimensions: StudyArea
-Initiation.sel

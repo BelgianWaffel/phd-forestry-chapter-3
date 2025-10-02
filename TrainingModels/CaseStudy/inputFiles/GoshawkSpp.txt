@@ -1,7 +1,0 @@
-Spp	Rating
-AC	0.5
-AT	1
-BL	0.6
-HM	0.5
-PL	1
-SW	0.8
