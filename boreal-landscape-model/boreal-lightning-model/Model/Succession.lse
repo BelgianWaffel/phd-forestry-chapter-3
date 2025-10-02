@@ -229,7 +229,11 @@ INITIALSTATE
                       ToSpp: $toSpp{Species}
                       pTrans: Qtmp[fromSpp, toSpp]
                       contag: SppContagion[fromSpp, toSpp]
-                      pctChange: 100*(Qtmp[fromSpp, toSpp] - pReceiveTransition[id,toSpp])/pReceiveTransition[id,toSpp]
+                      // NPD trying to solve program crash div by zero - guard inserted below
+                      //pctChange: 100*(Qtmp[fromSpp, toSpp] - pReceiveTransition[id,toSpp])/pReceiveTransition[id,toSpp]
+                     pctChange: IF (pReceiveTransition[id,toSpp] > 0)
+                                        THEN 100*(Qtmp[fromSpp,toSpp] - pReceiveTransition[id,toSpp]) / pReceiveTransition[id,toSpp]
+                                        ELSE 0
                 END
             END
          END
@@ -239,7 +243,7 @@ INITIALSTATE
    // Set up tracking variables.
    // Only need to consider forested cells.
    OVER REGION WHOLE MAP
-      DECISION (StudyArea > 0) AND (SuccessionGroup > 0) AND (Species > 0)
+      DECISION (StudyArea > 0) AND (SuccessionGroup > 0) // AND (Species > 0) NPD trying to guard against zero
          ForestSize = ForestSize + 1
          SGSize[SuccessionGroup] = SGSize[SuccessionGroup] + 1
          // ForestSizeByZone[ManagementZone] = ForestSizeByZone[ManagementZone] + 1
@@ -301,9 +305,12 @@ RETURNTIME
 */
 
    // ##########################################################################################
-
+   // NPD trying to guard against zero div
    RETURNTIME = IF Time EQ 0 THEN 0.1 ELSE BaseTimestep
-
+   IF FLOOR(Time) <= 0
+       PreDisturbanceSpp = Species
+       // Species = 0
+   END
    // Clear tracking arrays
    // SizeByYearZone [=] 0
    SizeByClass [=] 0
@@ -327,7 +334,7 @@ RETURNTIME
         AttackedSB = MAX(AttackedSB - BaseTimestep, 0)
    END
 
-   // Clear Species in first step to "force" trajectories to be built
+   // Clear Species in first step to "force" trajectories to be built //NPD - potentially causes div by zero crash
    IF FLOOR(Time) <= 0
       PreDisturbanceSpp = Species
       Species = 0
