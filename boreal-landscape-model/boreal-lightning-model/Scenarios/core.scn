@@ -78,17 +78,13 @@ Scenario: ..\Model\coreParameterDefaults.scn
 BaseTimestep = 5
 
 // Turn off Succession
-ApplySppSuccession = FALSE
+ApplySppSuccession = TRUE
+
 // Set fire parameters
 FireModelType = rSizeBasedFire // rSizeBasedFire , rSimpleEmpiricalFire
 
 FireMeanSize = 200 // now means mean duration (mean radius in 100m; 25 gives around 130 year return time)
 FireMeanNumPerDecade = 12
-
-//  Set harvest parameters 
-// Area-based harvest
-// AreaBasedHarvest = FALSE
-// PercentBasedHarvest = FALSE
 
 // ############################################################################ //
 // Create output folders

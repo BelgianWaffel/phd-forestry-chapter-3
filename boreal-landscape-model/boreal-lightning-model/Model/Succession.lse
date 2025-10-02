@@ -51,7 +51,7 @@ DEFINITIONS
    /////////////////////////////////////////////////
    // FEEDBACK STATE
    /////////////////////////////////////////////////
-   LOCAL: currMgmtZoneSchedId
+   // LOCAL: currMgmtZoneSchedId
    LAYER: StandAge,  Species,  NextTransAge,  NextTransYr,  NumTrans 
    LAYER: StandAge2, Species2, NextTransAge2, NextTransYr2, NumTrans2 
    LAYER: AU, PreDisturbanceAge, PreDisturbanceSpp, PreDisturbanceAge2, PreDisturbanceSpp2
@@ -651,7 +651,7 @@ PROBINIT
             // SPATIAL SUCCESSION POST-SBW --> assign "neighbour-based" new trajectory for cohort1 and cohort2 
             // #########################################################################################################
 
-            usedNeighbourTraj = FALSE
+            usedNeighbourTraj = TRUE
 
             // Randomly choose if this cell uses a neighbour or selects an independent trajectory for C1 and C2
             IF (pTrajContagion > 0) AND (UNIFORM(0,1) <= pTrajContagion) 
@@ -767,7 +767,7 @@ PROBINIT
             // SPATIAL SUCCESSION POST-SBW --> assign "neighbour-based" new trajectory for only cohort2 
             // ############################################################################################
 
-            usedNeighbourTraj = FALSE
+            usedNeighbourTraj = TRUE
   
             // Randomly choose if this cell uses a neighbour or selects an independent trajectory
             IF ((pTrajContagion > 0) AND (UNIFORM(0,1) <= pTrajContagion)  AND (PctCohort2 > 0))
@@ -855,7 +855,7 @@ PROBINIT
             // SPATIAL SUCCESSION POST-SBW --> assign "neighbour-based" new trajectory for only cohort2 
             // ############################################################################################
    
-            usedNeighbourTraj = FALSE
+            usedNeighbourTraj = TRUE
   
             // Randomly choose if this cell uses a neighbour or selects an independent trajectory
             IF ((pTrajContagion > 0) AND (UNIFORM(0,1) <= pTrajContagion)  AND (PctCohort2 > 0))
@@ -898,7 +898,7 @@ PROBINIT
          // ############################################################################################
          ELSE // Time EQ 0 OR Mortality from logging or fire
 
-            usedNeighbourTraj = FALSE
+            usedNeighbourTraj = TRUE
             baseIndex = SuccessionGroup * NumAC
 
             IF (FLOOR(Time) > 0) AND (timeSinceDisturbance < BaseTimestep)  // If Disturbed.
@@ -1070,17 +1070,6 @@ PROBINIT
                   transAge = ROUND(UNIFORM(minTransAge, (ac+1)*ACSize-1))
 
                   singleTrans[0] = transAge
-// Fallback: if probs sum to 0, use receive probs
-tot = 0
-OVER INDEX(1, NumSppCodes-1)
-   tot = tot + pTreeSppVector[Index]
-END
-IF tot <= 0
-   OVER INDEX(1, NumSppCodes-1)
-      pTreeSppVector[Index] = pReceiveTransition[baseIndex + ac, Index]
-   END
-END
-
                   singleTrans[1] = CLASSIFIED_DIST[pTreeSppVector]
      
                   // Add a new transition
@@ -1122,17 +1111,6 @@ END
                   minTransAge = MAX(ac*ACSize, transAge + SeralTransitionYears)
                   transAge = ROUND(UNIFORM(minTransAge, (ac+1)*ACSize-1))
                   singleTrans2[0] = transAge
-// Fallback: if probs sum to 0, use receive probs (cohort 2)
-tot2 = 0
-OVER INDEX(1, NumSppCodes-1)
-   tot2 = tot2 + pTreeSppVector2[Index]
-END
-IF tot2 <= 0
-   OVER INDEX(1, NumSppCodes-1)
-      pTreeSppVector2[Index] = pReceiveTransition2[baseIndex2 + ac, Index]
-   END
-END
-
                   singleTrans2[1] = CLASSIFIED_DIST[pTreeSppVector2] // shouldn't we be using number 2 here??? - NPD
 
                   // Add a new transition
@@ -1297,11 +1275,11 @@ END
    END
 
 
-   PROBINIT = FALSE
+   PROBINIT = TRUE
 
 ENDPI
 
 
-TRANSITIONS = FALSE
+TRANSITIONS = TRUE
 
 
