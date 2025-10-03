@@ -5,6 +5,7 @@ SELES Scenario
 // ############################################################################ //
 Scenario: ..\Model\coreInputs.scn
 
+
 // ############################################################################ //
 // Load unique input layers for this scenario
 // Use same format as in coreInputs.scn
@@ -30,39 +31,20 @@ $SppSuccessionFile$ = SppSuccession //_noSucc
 $SymmetricIncreasFile$ = SymmetricIncrease //_noSucc
 $ContagionFile$ = Contagion //_noSucc
 
+$AACFile$ = AACAreaPct
+
+
 // ############################################################################ //
 // Load model
 // ############################################################################ //
 
- Model Dimensions: LandUnit
+Model Dimensions: LandUnit
 ..\Model\BLM.sel
 
+
 Minimize Static
-// hide unnecessary dynamic views
-Minimize Initial State  // hides initialAU, initialSpp, initialAge
-Minimize StandType 
-Minimize StandAge2
-Minimize NumTrans2
-Minimize PctCohort2
-Minimize TransTrajectory
-Minimize TransTrajectory2
-Minimize SRD
-Minimize Z
-Minimize SalvageableVolume
-Minimize NRD
-Minimize Species2
-Minimize NextTransAge
-Minimize N
-Minimize PreDisturbanceSpp
-Minimize PreDisturbanceSpp2
-Minimize PreDisturbanceAge2
-Minimize VollncLoss1
-Minimize VolIncLoss2
-Minimize NextTransYr
-Minimize NextTransYr2
-Minimize BDP
-Minimize NextTransAge2
 Tile
+
 
 // ############################################################################ //
 // Load core parameter default settings
@@ -78,13 +60,21 @@ Scenario: ..\Model\coreParameterDefaults.scn
 BaseTimestep = 5
 
 // Turn off Succession
-ApplySppSuccession = TRUE
+ApplySppSuccession = TRUE //TRUE
+
 
 // Set fire parameters
-FireModelType = rSizeBasedFire // rSizeBasedFire , rSimpleEmpiricalFire
+FireModelType = rSimpleEmpiricalBasedFire //rSimpleEmpiricalFire / SizeBased...
 
 FireMeanSize = 200 // now means mean duration (mean radius in 100m; 25 gives around 130 year return time)
 FireMeanNumPerDecade = 12
+
+
+//  Set harvest parameters 
+// Area-based harvest
+AreaBasedHarvest = TRUE
+PercentBasedHarvest = TRUE
+
 
 // ############################################################################ //
 // Create output folders
@@ -97,3 +87,5 @@ mkdir cellhd
 // Run simulation. If there is no SimStart command, then simulations must be run manually
 //   SimStart 105 1
 // ############################################################################ //
+
+

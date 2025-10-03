@@ -2,7 +2,7 @@
 // Can be parameterized to run as a "simple empirical" size-based (top-down) model based on number and size of fires,
 // or as a "more complex somewhat process-based" (bottom-up) model based on number and duration of fires and fuel.
 // In this latter "size" parameters are interpreted as "duration" (in days)
-LSEVENT: SimpleFire
+LSEVENT: Fire
 
 DEFINITIONS
    /////////////////////////////////////////////////
@@ -18,7 +18,7 @@ DEFINITIONS
    // LandUnit in rows , parameters in columns
    GLOBAL CONSTANT: LandUnitInfo[], rFireReturnInterval
 
-   LAYER: StudyArea, LandUnit, Ecoregion 
+   LAYER: StudyArea, LandUnit, Ecoregion, ManagementZone
 
    /////////////////////////////////////////////////
    // INPUT STATE - dynamic in other events
@@ -55,7 +55,7 @@ DEFINITIONS
    GLOBAL VARIABLE: VolumeUnsalvaged[]
    GLOBAL CONSTANT: Salvageable, Lost
 
-   GLOBAL VARIABLE: AreaBurnedByLandUnit[]
+   GLOBAL VARIABLE: VolumeBurnedByZone[], AreaBurnedByZone[], AreaBurnedByLandUnit[]
 
    GLOBAL VARIABLE: VolDisturbed[], AreaDisturbed[], NumDisturbPatches[], SelectedAreaDisturbed[], NumSelectedDisturbPatches[]
    GLOBAL CONSTANT: rTotalDisturbed, rForestDisturbed
@@ -88,6 +88,8 @@ RETURNTIME
    RETURNTIME = IF (Time EQ 0) THEN 0.7 ELSE BaseTimestep 
 
    // Clear tracking variables
+   VolumeBurnedByZone [=] 0
+   AreaBurnedByZone [=] 0
    AreaBurnedByLandUnit [=] 0
 
    VolDisturbed[rFire] = 0
@@ -192,6 +194,8 @@ TRANSITIONS
    //////////////////////////////////////////////////////////////////////////////////////////////////////////
  
    // Increment the yearly volume and areas Burnt
+   VolumeBurnedByZone[ManagementZone] = VolumeBurnedByZone[ManagementZone] + Yield
+   AreaBurnedByZone[ManagementZone] = AreaBurnedByZone[ManagementZone] + HaPerCell
    AreaBurnedByLandUnit[LandUnit] = AreaBurnedByLandUnit[LandUnit] + HaPerCell
    VolDisturbed[rFire] = VolDisturbed[rFire] + Yield
    AreaDisturbed[rFire,rTotalDisturbed] = AreaDisturbed[rFire,rTotalDisturbed] + HaPerCell

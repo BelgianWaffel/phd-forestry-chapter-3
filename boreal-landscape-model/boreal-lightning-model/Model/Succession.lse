@@ -5,7 +5,7 @@ DEFINITIONS
    /////////////////////////////////////////////////
    // INPUT STATE - constants and parameters
    /////////////////////////////////////////////////
-   GLOBAL CONSTANT: HaPerCell, MaxStandAge, NumSppCodes, NumSuccGrps
+   GLOBAL CONSTANT: HaPerCell, MaxStandAge, NumSppCodes, NumSuccGrps, MaxAU
    LAYER: StudyArea, LandUnit, SuccessionGroup, Ecoregion, FBPFuels
    LAYER: VolPerHa
 
@@ -41,17 +41,19 @@ DEFINITIONS
    // INPUT STATE - dynamic in other events
    /////////////////////////////////////////////////
    LAYER: LastDisturbance  // type of last disturbance
-   GLOBAL CONSTANT: rSBW1, rSBW2, rSBW3, rFire 
-   LAYER: Burnt, AttackedSB, SBWMortality, PctCohort2 
+   GLOBAL CONSTANT: rSBW1, rSBW2, rSBW3, rFire, rLogged
+   LAYER: Logged, Burnt, AttackedSB, SBWMortality, PctCohort2
    GLOBAL CONSTANT: MaxTimeSinceDisturbance
    GLOBAL CONSTANT: postSBWNonHost, postSBWHost, pctHosts
 
-   // GLOBAL CONSTANT: rAC
+   LAYER: ManagementZone
+   GLOBAL VARIABLE: SetManagementZone[], SetManagementZoneSched[]
+   GLOBAL CONSTANT: rAC
 
    /////////////////////////////////////////////////
    // FEEDBACK STATE
    /////////////////////////////////////////////////
-   // LOCAL: currMgmtZoneSchedId
+   LOCAL: currMgmtZoneSchedId
    LAYER: StandAge,  Species,  NextTransAge,  NextTransYr,  NumTrans 
    LAYER: StandAge2, Species2, NextTransAge2, NextTransYr2, NumTrans2 
    LAYER: AU, PreDisturbanceAge, PreDisturbanceSpp, PreDisturbanceAge2, PreDisturbanceSpp2
@@ -66,10 +68,10 @@ DEFINITIONS
    /////////////////////////////////////////////////
    // OUTPUT STATE
    /////////////////////////////////////////////////
-   GLOBAL VARIABLE: ForestSize, SGSize[], LUSize[] // , ForestSizeByZone[]
-   // GLOBAL VARIABLE: SizeByYearZone[]
+   GLOBAL VARIABLE: ForestSize, SGSize[], LUSize[], ForestSizeByZone[]
+   GLOBAL VARIABLE: SizeByYearZone[]
 
-  GLOBAL VARIABLE: SizeByClass[] //, SizeByClassZone[]
+   GLOBAL VARIABLE: SizeByClass[], SizeByClassZone[]
 
    LAYER: StandType
    LOCAL: LikeNeighbLoc[4] // To store "like" neighbours
@@ -145,17 +147,11 @@ INITIALSTATE
 
             id = sg * NumAC + Index
 
-            // NPD flagged a potential division by zero below //
+            pMakeTransition[id,sppId] = pOut/pOld
+            pMakeTransition2[id,sppId] = pOut/pOld
 
-            // pMakeTransition[id,sppId] = pOut/pOld
-            // pMakeTransition2[id,sppId] = pOut/pOld
-            pMakeTransition[id,sppId]  = IF (pOld > 0) THEN (pOut/pOld) ELSE 0
-            pMakeTransition2[id,sppId] = IF (pOld > 0) THEN (pOut/pOld) ELSE 0
-
-            // pReceiveTransition[id,sppId] = pIn/100
-            // pReceiveTransition2[id,sppId] = pIn/100
-            pReceiveTransition[id,sppId]  = MAX(pIn/100, 0)
-            pReceiveTransition2[id,sppId] = MAX(pIn/100, 0)
+            pReceiveTransition[id,sppId] = pIn/100
+            pReceiveTransition2[id,sppId] = pIn/100
 
          END
 
@@ -229,29 +225,32 @@ INITIALSTATE
                       ToSpp: $toSpp{Species}
                       pTrans: Qtmp[fromSpp, toSpp]
                       contag: SppContagion[fromSpp, toSpp]
-                      // NPD trying to solve program crash div by zero - guard inserted below
-                      //pctChange: 100*(Qtmp[fromSpp, toSpp] - pReceiveTransition[id,toSpp])/pReceiveTransition[id,toSpp]
-                     pctChange: IF (pReceiveTransition[id,toSpp] > 0)
-                                        THEN 100*(Qtmp[fromSpp,toSpp] - pReceiveTransition[id,toSpp]) / pReceiveTransition[id,toSpp]
-                                        ELSE 0
+                      pctChange: 100*(Qtmp[fromSpp, toSpp] - pReceiveTransition[id,toSpp])/pReceiveTransition[id,toSpp]
                 END
             END
          END
       END
    END
 
+   currMgmtZoneSchedId = 0
+
+   IF (SetManagementZone[0] > 0) AND (SetManagementZoneSched[0] EQ 0)
+      ManagementZone = SetManagementZone[0]
+      currMgmtZoneSchedId = 1
+   END
+
    // Set up tracking variables.
    // Only need to consider forested cells.
    OVER REGION WHOLE MAP
-      DECISION (StudyArea > 0) AND (SuccessionGroup > 0) // AND (Species > 0) NPD trying to guard against zero
+      DECISION (StudyArea > 0) AND (SuccessionGroup > 0) AND (Species > 0)
          ForestSize = ForestSize + 1
          SGSize[SuccessionGroup] = SGSize[SuccessionGroup] + 1
-         // ForestSizeByZone[ManagementZone] = ForestSizeByZone[ManagementZone] + 1
-         // SizeByYearZone[StandAge,ManagementZone] = SizeByYearZone[StandAge,ManagementZone] + 1
+         ForestSizeByZone[ManagementZone] = ForestSizeByZone[ManagementZone] + 1
+         SizeByYearZone[StandAge,ManagementZone] = SizeByYearZone[StandAge,ManagementZone] + 1
 
          ageClass = MIN(FLOOR(StandAge/ACSize), NumAgeClasses-1)
          SizeByClass[ageClass] = SizeByClass[ageClass] + 1
-         // SizeByClassZone[ageClass,ManagementZone] = SizeByClassZone[ageClass,ManagementZone] + 1
+         SizeByClassZone[ageClass,ManagementZone] = SizeByClassZone[ageClass,ManagementZone] + 1
 
          // Set up initial state for stand type map
          StandType = SppLookup[Species, rStandType]
@@ -305,26 +304,34 @@ RETURNTIME
 */
 
    // ##########################################################################################
-   // NPD trying to guard against zero div
+
    RETURNTIME = IF Time EQ 0 THEN 0.1 ELSE BaseTimestep
-   IF FLOOR(Time) <= 0
-       PreDisturbanceSpp = Species
-       // Species = 0
-   END
+
    // Clear tracking arrays
-   // SizeByYearZone [=] 0
+   SizeByYearZone [=] 0
    SizeByClass [=] 0
-   // SizeByClassZone [=] 0
+   SizeByClassZone [=] 0
 
    IF ApplySppSuccession
       SpeciesLeadBySG [=] 0  // By SppLeadCode, SuccGrp
       SpeciesLeadByLU [=] 0  // By SppLeadCode, LU
       SpeciesBySG [=] 0  // By SppCode, SuccGrp
       SpeciesByLU [=] 0  // By SppCode, LU
-      // StandTypeByLU [=] 0
+      StandTypeByLU [=] 0
       //HostSppByLU [=] 0
-  // END
+   END
 
+   // Update management zone information if scheduled
+   IF (currMgmtZoneSchedId <= 2) AND (SetManagementZone[currMgmtZoneSchedId] > 0) AND (SetManagementZoneSched[currMgmtZoneSchedId] EQ FLOOR(Time))
+      ManagementZone = SetManagementZone[currMgmtZoneSchedId]
+      currMgmtZoneSchedId = currMgmtZoneSchedId + 1
+
+      // Reset the tracking variables
+      ForestSizeByZone[=] 0
+      OVER REGION WHOLE MAP
+         DECISION (SuccessionGroup > 0) AND (Species > 0)
+         ForestSizeByZone[ManagementZone] = ForestSizeByZone[ManagementZone] + 1
+      END
    END
 
    // Update time since disturbance information
@@ -334,7 +341,7 @@ RETURNTIME
         AttackedSB = MAX(AttackedSB - BaseTimestep, 0)
    END
 
-   // Clear Species in first step to "force" trajectories to be built //NPD - potentially causes div by zero crash
+   // Clear Species in first step to "force" trajectories to be built
    IF FLOOR(Time) <= 0
       PreDisturbanceSpp = Species
       Species = 0
@@ -364,7 +371,9 @@ PROBINIT
    prevStandAge = StandAge
 
    //## CRITICAL FLAG TO TELL MODEL THAT A DISTURBANCE OCCURRED
-   timeSinceDisturbance = MaxTimeSinceDisturbance - MAX(Burnt, AttackedSB)
+   timeSinceDisturbance = MaxTimeSinceDisturbance - MAX(Logged,MAX(Burnt, AttackedSB))  
+
+   Logged = MAX(Logged-BaseTimestep, 0)
    
    // Increment the stand age in years for each forested cell (except in first pass and for recent disturbances)
    IF (FLOOR(Time) > 0) AND (timeSinceDisturbance >= BaseTimestep)
@@ -374,10 +383,12 @@ PROBINIT
 
    // Re-compute tracking variables
    // Get age for some variables before it is incremented so we don't lose age '0' stands
+   SizeByYearZone[StandAge,ManagementZone] = SizeByYearZone[StandAge,ManagementZone] + 1
 
    ageClass = MIN(FLOOR(StandAge /ACSize), NumAgeClasses-1)
    SizeByClass[ageClass] = SizeByClass[ageClass] + 1
-   
+   SizeByClassZone[ageClass,ManagementZone] = SizeByClassZone[ageClass,ManagementZone] + 1
+
    // ###################################################################
    
    // ###################################################################
@@ -517,7 +528,7 @@ PROBINIT
                END
 
                // Reassign AU based on newly assigned species
-               // AU = MIN((AU + SppLookup[Species,3]), MaxAU) 
+               AU = MIN((AU + SppLookup[Species,3]), MaxAU) 
 
             // DOUBLE COHORT
             ELSE IF PctCohort2 > 0 
@@ -636,12 +647,12 @@ PROBINIT
                END
 
                // Reassign AU based on newly assigned species
-               // l1 = SppLookup[Species,  0]
-               // l2 = SppLookup[Species2, 0]
-               // SppInv = IF (PctCohort2 > 50) THEN SppCombine[l2,l1] 
+               //l1 = SppLookup[Species,  0]
+               //l2 = SppLookup[Species2, 0]
+               //SppInv = IF (PctCohort2 > 50) THEN SppCombine[l2,l1] 
                //         ELSE SppCombine[l1,l2]
 
-               // AU = MIN((AU + CLAMP(SppLookup[Species,3],0,10)), MaxAU) 
+               AU = MIN((AU + CLAMP(SppLookup[Species,3],0,10)), MaxAU) 
 
             END
 
@@ -760,7 +771,7 @@ PROBINIT
 
             END
 
-            // AU = MIN((AU + CLAMP(SppLookup[Species,3],0,10)), MaxAU) 
+            AU = MIN((AU + CLAMP(SppLookup[Species,3],0,10)), MaxAU) 
 
             // For all conditions where SBWMortality was = 2  
             // ############################################################################################
@@ -792,21 +803,14 @@ PROBINIT
                      REMOVE ALL(SOURCE TransTrajectory)
                      
                      SOURCE NumTrans = 0
-                     // p = HEAD(TransTrajectory)
-                     // WHILE(p)
-                        // singleTrans [=] GET(TransTrajectory, p) // NPD shouldn't  num 1 be used here, not 2 ???
-                        // p = NEXT(TransTrajectory,p)
+                     p = HEAD(TransTrajectory)
+                     WHILE(p)
+                        singleTrans2 [=] GET(TransTrajectory, p)
+                        p = NEXT(TransTrajectory,p)
                         // Add a new transition
-                        // INSERT TAIL(SOURCE TransTrajectory, singleTrans)
-                        // SOURCE NumTrans = MIN(SOURCE NumTrans + 1 ,6)
-                     // END
-                        p = HEAD(TransTrajectory)
-                        WHILE(p)
-                            singleTrans [=] GET(TransTrajectory, p)
-                            p = NEXT(TransTrajectory,p)
-                            INSERT TAIL(SOURCE TransTrajectory, singleTrans)
-                            SOURCE NumTrans = MIN(SOURCE NumTrans + 1 ,6)
-                        END
+                        INSERT TAIL(SOURCE TransTrajectory, singleTrans)
+                        SOURCE NumTrans = MIN(SOURCE NumTrans + 1 ,6)
+                     END
 
                      // Cohort 2 as well...if it exists
                      IF ((PctCohort2 >0) AND (PreDisturbanceSpp2 EQ SOURCE PreDisturbanceSpp2))
@@ -934,7 +938,7 @@ PROBINIT
                   nLikeNeighbours = 0
 
                   OVER REGION CENTRED(1,1)
-                  DECISION (Species > 0) AND ((MaxTimeSinceDisturbance - MAX(Burnt,AttackedSB)) < BaseTimestep)
+                  DECISION (Species > 0) AND ((MaxTimeSinceDisturbance - MAX(Logged,Burnt)) < BaseTimestep)
                      // Fire/logging are only asking about cohort 1; cohort 2 has no effect or role here.
                      // IF (((PreDisturbanceAge % (SOURCE PreDisturbanceAge) <=10)) AND (SppLookup[PreDisturbanceSpp , 0]  EQ l1))
                      IF (PreDisturbanceSpp EQ (SOURCE PreDisturbanceSpp))
@@ -971,22 +975,38 @@ PROBINIT
                // End spatially contagious succession
                // ######################################################################  
                // If we didn't use the spatially contiguous succession pick spp. from distribution in succession file
-                            IF (!usedNeighbourTraj) 
+                           IF (!usedNeighbourTraj) 
                   OVER INDEX(1,NumSppCodes-1)
                      tmpLead = SppLookup[Index, 0]
                      tmpSecondary = SppLookup[Index, 1]
                       // This will use base probabilities (representation) for each landtype: no temporal contagion.
                      pTreeSppVector[Index] = pReceiveTransition[baseIndex,Index]
                   END
-                  lastDisturbanceAgent = LastDisturbance
-                  // lastDisturbanceAgent = IF (LastDisturbance > 0) THEN LastDisturbance // ELSE rLogged
+
+                  lastDisturbanceAgent = IF (LastDisturbance > 0) THEN LastDisturbance ELSE rLogged
 
                   AU = MAX(AU - CLAMP(SppLookup[SppInv,3],0,10), 3)
-	  IF (lastDisturbanceAgent EQ rFire)
-                      Species = CLASSIFIED_DIST[pTreeSppVector]
-                    END
 
-                  // AU = MIN(AU + CLAMP(SppLookup[Species,3],0,10), MaxAU)
+                  IF (lastDisturbanceAgent EQ rLogged) 
+
+                  ///  ## Selective reassignment of first species composition based on previous composition.
+                  ///////////////////////////////////////////////////////////////////////
+                     IF (SppLookup[SppInv,0] EQ sS)  OR (SppLookup[SppInv,1] EQ sS)    // If lead was Fir...
+                        Species = 45                     // Fir comes back through advance regen
+                     ELSE IF SppLookup[SppInv,0] EQ sPe  // If lead was Aspen...
+                        Species = 18                     // Assume that aspen comes back
+                     ELSE IF SppLookup[SppInv,0] EQ sPg  // If lead was jack pine
+                        Species = 36                     // Assume that jack pine is planted
+                     ELSE                                // If lead was anything else...
+                       Species = 27                      // Assume that spruce is planted
+                     END
+                   ///////////////////////////////////////////////////////////////////////						
+
+                  ELSE // post fire.
+                     Species = CLASSIFIED_DIST[pTreeSppVector] 
+                  END
+
+                  AU = MIN(AU + CLAMP(SppLookup[Species,3],0,10), MaxAU)
 
                   // Clear previous trajectories (if they exist)
                   REMOVE ALL(TransTrajectory)
@@ -1111,7 +1131,7 @@ PROBINIT
                   minTransAge = MAX(ac*ACSize, transAge + SeralTransitionYears)
                   transAge = ROUND(UNIFORM(minTransAge, (ac+1)*ACSize-1))
                   singleTrans2[0] = transAge
-                  singleTrans2[1] = CLASSIFIED_DIST[pTreeSppVector2] // shouldn't we be using number 2 here??? - NPD
+                  singleTrans2[1] = CLASSIFIED_DIST[pTreeSppVector]
 
                   // Add a new transition
                   INSERT TAIL(TransTrajectory2, singleTrans2)
@@ -1134,26 +1154,14 @@ PROBINIT
          
          // ###########
          // Set up next transition - cohort2
-         // IF (PctCohort2 > 0) AND (SIZE(TransTrajectory2) <= 0)
-         //   NextTransAge2 = 0  // no transitions
-         //   NextTransYr2 = 0
-        // ELSE
-          //  singleTrans2 [=] GET HEAD(TransTrajectory2)
-          //  NextTransAge2 = singleTrans2[0]
-          //  NextTransYr2 = CLAMP(NextTransAge2 - StandAge2, 0, 300)
-        // END
-
-        // ###########
-        // NPD - inverted and cleaned version of block above seems most logical ???
-        // Set up next transition - cohort2
-           IF (PctCohort2 > 0) AND (SIZE(TransTrajectory2) > 0)
-             singleTrans2 [=] GET HEAD(TransTrajectory2)
-             NextTransAge2 = singleTrans2[0]
-             NextTransYr2 = CLAMP(NextTransAge2 - StandAge2, 0, 300)
-           ELSE
-             NextTransAge2 = 0
+         IF (PctCohort2 > 0) AND (SIZE(TransTrajectory2) <= 0)
+            NextTransAge2 = 0  // no transitions
             NextTransYr2 = 0
-           END
+         ELSE
+            singleTrans2 [=] GET HEAD(TransTrajectory2)
+            NextTransAge2 = singleTrans2[0]
+            NextTransYr2 = CLAMP(NextTransAge2 - StandAge2, 0, 300)
+         END
 
       //##############################################################################################################
       // Other years: apply precomputed trajectory
@@ -1176,12 +1184,12 @@ PROBINIT
                lead2 = SppLookup[Species2,  0]
                SppInv = IF (PctCohort2 > 50) THEN SppCombine[lead2,lead1] 
                         ELSE SppCombine[lead1,lead2]
-               // AU = MIN(AU + CLAMP(SppLookup[SppInv,3],0,10), MaxAU)
+               AU = MIN(AU + CLAMP(SppLookup[SppInv,3],0,10), MaxAU)
             ELSE  
                prevLead = SppLookup[Species,  0]
                AU = MAX(AU - CLAMP(SppLookup[Species,3],0,10),3)
                Species = singleTrans[1]
-               // AU = MIN(AU + CLAMP(SppLookup[Species,3],0,10), MaxAU)
+               AU = MIN(AU + CLAMP(SppLookup[Species,3],0,10), MaxAU)
             END
 
             lead = SppLookup[Species, 0]
@@ -1222,7 +1230,7 @@ PROBINIT
                SppInv = IF PctCohort2 > 50 THEN SppCombine[lead2,lead1] 
                         ELSE SppCombine[lead1,lead2]
 
-               // AU = MIN(AU + CLAMP(SppLookup[SppInv,3],0,10), MaxAU)
+               AU = MIN(AU + CLAMP(SppLookup[SppInv,3],0,10), MaxAU)
 
                //  ** I don't really care about tracking this stuff for the second cohort
                // lead2 = SppLookup[Species2, 0]
@@ -1246,7 +1254,7 @@ PROBINIT
          END
    
       END // ##
-       //////////////////////////////////////////////////////////////////
+      //////////////////////////////////////////////////////////////////
       // In all cases....
       //////////////////////////////////////////////////////////////////
       // Track the species composition

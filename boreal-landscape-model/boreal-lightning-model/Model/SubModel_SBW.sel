@@ -46,8 +46,8 @@ Global Constants:
 // Note: bounds are only needed if they differ from the initial state or if there is no initial state
 Spatial Variables:
    // Cohort 2
-   StandAge2[-1, MaxStandAge] <- initialAge
-   PreDisturbanceAge2[-1, MaxStandAge] <- initialAge
+   StandAge2[MaxStandAge] <- initialAge
+   PreDisturbanceAge2[MaxStandAge] <- initialAge
 
    Species2[NumSppCodes] <- initialSpp 
    PreDisturbanceSpp2[NumSppCodes] <- initialSpp

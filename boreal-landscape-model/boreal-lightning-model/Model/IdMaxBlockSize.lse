@@ -1,0 +1,51 @@
+// Identify size of each each patch of forest available for harvest (max potential block size0
+LSEVENT: IdMaxBlockSize
+
+DEFINITIONS
+   GLOBAL VARIABLE: BaseTimestep // Base Time step (in years)
+
+   // Treatment tracking
+   LAYER: PotentialTreatmentType
+   GLOBAL CONSTANT: Unavailable, GreenBlock, SalvageBlock
+
+   LAYER: MaxPotBlockSize
+   GLOBAL CONSTANT: PotBlockSizeBound
+   
+   CLUSTER VARIABLE: currPatchSize
+ENDDEF
+
+RETURNTIME
+   RETURNTIME = IF Time EQ 0 THEN 0.12 ELSE BaseTimestep  // just after growing stock
+   MaxPotBlockSize = 0
+ENDRT
+
+// Initiate in any unvisited cell that is available for harvest
+PROBINIT
+   PROBINIT = (PotentialTreatmentType > Unavailable) AND (MaxPotBlockSize EQ 0) 
+   currPatchSize = 0
+ENDPI
+
+// In each cell visited, set MaxPotBlockSize to 1 so we can tell it has been visited
+TRANSITIONS
+   TRANSITIONS = (MaxPotBlockSize EQ 0)
+   MaxPotBlockSize = 1
+   currPatchSize = currPatchSize + 1
+ENDTR
+
+
+// Spread to any unvisited neighbours in patch of available forest to harvest
+SPREADLOCATION
+   REGION CENTRED(1, 1.5)
+      DECISION (PotentialTreatmentType > Unavailable) AND (MaxPotBlockSize EQ 0)
+ENDSL
+
+SPREADTIME = -1 // spread to cells within patch before initiating another patch (negative spread time for sequential vs. parallel cluster spreading)
+
+ENDCLUSTER // In last cell of a cluster/patch, mark with size of patch
+   IF currPatchSize > 1
+      MaxPotBlockSize = MIN(PotBlockSizeBound, currPatchSize)
+   END
+
+   ENDCLUSTER = TRUE
+ENDEC
+

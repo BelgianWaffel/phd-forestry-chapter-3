@@ -23,14 +23,14 @@ DEFINITIONS
    // LandUnit in rows, parameters in columns
    GLOBAL CONSTANT: LandUnitInfo[], rFireReturnInterval
 
-   LAYER: StudyArea, LandUnit, Ecoregion, FBPFuels 
-   
+   LAYER: StudyArea, LandUnit, Ecoregion, ManagementZone
+
    /////////////////////////////////////////////////
    // INPUT STATE - dynamic in other events
    /////////////////////////////////////////////////
    LAYER: Species, Species2, PctCohort2
    GLOBAL VARIABLE: LUSize[]
-   
+
    /////////////////////////////////////////////////
    // FEEDBACK STATE
    /////////////////////////////////////////////////
@@ -40,7 +40,7 @@ DEFINITIONS
    /////////////////////////////////////////////////
    // OUTPUT STATE
    /////////////////////////////////////////////////
-   LAYER: LastDisturbance // ,  FBPFuels type of last disturbance
+   LAYER: LastDisturbance,  FBPFuels // type of last disturbance
    GLOBAL CONSTANT: rFire
 
    // Shows areas recently burned and potential salvageable
@@ -65,7 +65,7 @@ DEFINITIONS
    GLOBAL VARIABLE: VolumeUnsalvaged[]
    GLOBAL CONSTANT: Salvageable, Lost
 
-   GLOBAL VARIABLE: AreaBurnedByLandUnit[]
+   GLOBAL VARIABLE: VolumeBurnedByZone[], AreaBurnedByZone[], AreaBurnedByLandUnit[]
 
    GLOBAL VARIABLE: VolDisturbed[], AreaDisturbed[], NumDisturbPatches[], SelectedAreaDisturbed[], NumSelectedDisturbPatches[]
    GLOBAL CONSTANT: rTotalDisturbed, rForestDisturbed
@@ -98,8 +98,8 @@ RETURNTIME
    RETURNTIME = IF (Time EQ 0) THEN 0.7 ELSE BaseTimestep 
 
    // Clear tracking variables
-   // VolumeBurnedByZone [=] 0
-   // AreaBurnedByZone [=] 0
+   VolumeBurnedByZone [=] 0
+   AreaBurnedByZone [=] 0
    AreaBurnedByLandUnit [=] 0
 
    VolDisturbed[rFire] = 0
@@ -217,7 +217,8 @@ TRANSITIONS
    FireIntensity = 0
 
    // Calculate Fire Intensity (only for unburned, but burnable cells)
-   IF (FireModelType EQ rDurationBasedFire) AND (FBPFuels >0) AND (Burnt < (MaxTimeSinceDisturbance - BaseTimestep + 1)) 
+   IF (FireModelType EQ rDurationBasedFire) AND (FBPFuels >0) AND (Burnt < (MaxTimeSinceDisturbance - BaseTimestep + 1))
+
       // Determine FBP fuel effect on initial rate of spread (RSI)
       IF (FBPFuels <= 5) OR (FBPFuels >= 9)
          a = FuelConstants[FBPFuels,0]
@@ -309,9 +310,9 @@ TRANSITIONS
       LastDisturbance = rFire
       VolPerHa = 0 // No more volume when burned --> but there remains the SalvageableVolume
 
-      // Increment the yearly volume and areas Burnt
-      // VolumeBurnedByZone[ManagementZone] = VolumeBurnedByZone[ManagementZone] + Yield
-      // AreaBurnedByZone[ManagementZone] = AreaBurnedByZone[ManagementZone] + HaPerCell
+       // Increment the yearly volume and areas Burnt
+      VolumeBurnedByZone[ManagementZone] = VolumeBurnedByZone[ManagementZone] + Yield
+      AreaBurnedByZone[ManagementZone] = AreaBurnedByZone[ManagementZone] + HaPerCell
       AreaBurnedByLandUnit[LandUnit] = AreaBurnedByLandUnit[LandUnit] + HaPerCell
       VolDisturbed[rFire] = VolDisturbed[rFire] + Yield
       AreaDisturbed[rFire,rTotalDisturbed] = AreaDisturbed[rFire,rTotalDisturbed] + HaPerCell
