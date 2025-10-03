@@ -1,8 +1,8 @@
 gitignore
 
 # Ignore output directories
-/boreal-landscape-model/boreal-lightning-model/Scenarios/oCore/
-/boreal-landscape-model/boreal-lightning-model/Scenarios/oCore/*.txt
+/boreal-landscape-model/Scenarios/oCore/
 
 # Ignore specific output files
-/boreal-landscape-model/boreal-lightning-model/Scenarios/*.txt
+/boreal-landscape-model/Scenarios/*.txt
+/boreal-landscape-model/Scenarios/oCore/*.txt
