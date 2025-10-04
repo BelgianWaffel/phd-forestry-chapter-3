@@ -92,7 +92,7 @@ RETURNTIME
    END
 ENDRT
 
-PROBINIT
+PROBINIT // ORDERED RECOMPUTE //NPD trying to solve patch count issue. 
    PROBINIT = IF (isPatchEvent) THEN (PatchType EQ currType) AND (StudyArea > 0)
               ELSE (EdgeInterior EQ rInterior)
    numActiveCells = 0

@@ -28,7 +28,7 @@ Landscape Events:
 // ###########################################
 Global Constants:
    MaxPatchTypes = 16
-   MaxNumPatches = 100000
+   MaxNumPatches = 500000 // NPD - patch count issue remains, arbitrarilly large number selected for now (bandaid). check identify patch .lse for further detail. working on SBW crash now. 
 
 
 // ###########################################
@@ -38,7 +38,7 @@ Global Constants:
 Spatial Variables:
    PatchType[MaxPatchTypes]
    EdgeInterior[2]
-   PatchId[100000]
+   PatchId[500000] // NPD - orignial value was 100,000
    CoreAreaId[100000]
 
 

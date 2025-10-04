@@ -62,8 +62,8 @@ NUMCLUSTERS
    startTime = Time
 
    //Assign cluster specific mortality prob.- emulating stochastic site specific stress.
-   ProbMortality = ROUND(UNIFORM(0, 100)) 
-
+   // ProbMortality = ROUND(UNIFORM(0, 100)) // NPD - potential cause of potential div / 0 SELES UI crash? Safeguarded patch below. unverified. 
+   ProbMortality = MAX(1, ROUND(UNIFORM(1, 100)))
 ENDNC
 
 
@@ -165,7 +165,7 @@ TRANSITIONS
             VolDiff2 = 0
          ELSE 
             SBWtypeDamage = 0  
-            VolDiff1 = FLOOR((ProbMort1/ProbMortality )*100)
+            VolDiff1 = FLOOR((ProbMort1/MAX(ProbMortality, 1)) *100) // NPD added div/0 safegaruard
             VolDiff2 = 0
          END
 
@@ -178,15 +178,15 @@ TRANSITIONS
          ELSE IF ((ProbMort1 >= ProbMortality ) AND (ProbMort2 < ProbMortality ))
             SBWtypeDamage = 2 // Only host in cohorts 1 killed
             VolDiff1 = 0
-            VolDiff2 = FLOOR((ProbMort2/ProbMortality )*100)
+            VolDiff2 = FLOOR((ProbMort2/MAX(ProbMortality, 1))*100) // NPD added div/0 safegaruard
          ELSE IF ((ProbMort1 < ProbMortality ) AND (ProbMort2 >= ProbMortality ))
             SBWtypeDamage = 3 // Cohort 2 killed
-            VolDiff1 = FLOOR((ProbMort1/ProbMortality )*100)
+            VolDiff1 = FLOOR((ProbMort1/MAX(ProbMortality, 1))*100) // NPD added div/0 safegaruard
             VolDiff2 = 0
          ELSE IF ((ProbMort1 < ProbMortality ) AND (ProbMort2 < ProbMortality ))
             SBWtypeDamage = 0 // Vol loss to cohort 1
-            VolDiff1 = FLOOR((ProbMort1/ProbMortality )*100)
-            VolDiff2 = FLOOR((ProbMort2/ProbMortality )*100)
+            VolDiff1 = FLOOR((ProbMort1/MAX(ProbMortality, 1))*100) // NPD added div/0 safegaruard
+            VolDiff2 = FLOOR((ProbMort2/MAX(ProbMortality, 1))*100) // NPD added div/0 safegaruard
          ELSE
             SBWtypeDamage = 0
             VolDiff1 = 0
