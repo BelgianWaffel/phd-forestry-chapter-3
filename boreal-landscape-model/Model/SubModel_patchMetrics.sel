@@ -16,6 +16,7 @@ External Variables:
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 */
+
 // Define new sub-model events and state below
 
 Landscape Events:
@@ -58,7 +59,8 @@ Global Constants:
    rEffectiveId = 8
 
    rEdge = 1
-   rInterior = 2   pi = 3.141593
+   rInterior = 2   
+   pi = 3.141593 // NPD - this was on the same line as the constant above, causing a parsing error related to the SELES model title at the top ??wtf??
 
 Global Variables:
    // ###########################################
