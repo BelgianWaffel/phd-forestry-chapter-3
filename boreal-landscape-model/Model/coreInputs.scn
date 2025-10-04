@@ -3,9 +3,9 @@ $gisData$ = ..\gisData\cell
 $cats$ = $gisData$\..\cats
 $inputFiles$ = ..\inputFiles
 
-$FireEventName$ = SimpleFire  // SimpleFire or FireFBP
-$SBWSubModel$ = SubModel_noSBW
-$PatchMetricsSubModel$ = SubModel_0
+$FireEventName$ = FireFBP  // SimpleFire or FireFBP
+$SBWSubModel$ = SubModel_SBW
+$PatchMetricsSubModel$ = SubModel_patchMetrics
 
 LandUnit = $gisData$\landUnit
 Ecoregion = $gisData$\Ecoregion
@@ -28,7 +28,7 @@ initialNearestRoadLoc = $gisData$\NearestRoadSegmentLoc_all
 
 // Set external variables for input tables
 $SppSuccessionFile$ = SppSuccession
-$SymmetricIncreasFile$ = SymmetricIncrease
+$SymmetricIncreaseFile$ = SymmetricIncrease
 $ContagionFile$ = Contagion
 
 $AACFile$ = AACAreaPct

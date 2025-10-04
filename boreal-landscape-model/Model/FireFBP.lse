@@ -17,7 +17,7 @@ DEFINITIONS
 
    GLOBAL VARIABLE: FireMeanNumPerDecade, FireMaxSize
    GLOBAL VARIABLE: FireMeanDuration, FireMaxDuration
-   //GLOBAL VARIABLE: FuelEffect, FuelEffectProb
+   // GLOBAL VARIABLE: FuelEffect, FuelEffectProb
    GLOBAL VARIABLE: FireProbUnburned[]
 
    // LandUnit in rows, parameters in columns
@@ -217,8 +217,7 @@ TRANSITIONS
    FireIntensity = 0
 
    // Calculate Fire Intensity (only for unburned, but burnable cells)
-   IF (FireModelType EQ rDurationBasedFire) AND (FBPFuels >0) AND (Burnt < (MaxTimeSinceDisturbance - BaseTimestep + 1))
-
+   IF (FireModelType EQ rDurationBasedFire) AND (FBPFuels >0) AND (Burnt < (MaxTimeSinceDisturbance - BaseTimestep + 1))
       // Determine FBP fuel effect on initial rate of spread (RSI)
       IF (FBPFuels <= 5) OR (FBPFuels >= 9)
          a = FuelConstants[FBPFuels,0]

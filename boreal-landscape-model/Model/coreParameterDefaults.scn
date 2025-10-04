@@ -11,14 +11,13 @@ ReportingInterval = -1 //50 //-1 for no output
 ApplySppSuccession = TRUE
 pTrajContagion = 0.9  
 
-
 // ############################################################################ //
 // Set fire parameters
 // ############################################################################ //
 
-FireModelType = rSizeBasedFire
+FireModelType = rDurationBasedFire
 
-ApplyFireFuelEffect = FALSE // If TRUE, use estimated fuel types to affect initiation and spread
+ApplyFireFuelEffect = TRUE // If TRUE, use estimated fuel types to affect initiation and spread
 ApplyFireLandUnitEffect = FALSE // If TRUE, pick initiation points based on MFRI for the land unit
 
 FireMeanSize = 200 // mean fire size (ha)
@@ -30,15 +29,15 @@ FireMeanNumPerDecade = 12
 FireProbUnburned = 0, 0 
 
 // Not used for size based fire
-//FireMeanDuration = 200 // days/steps. . Only for duration-based fires (FireModelType = rDurationBasedFire)
-//FireMaxDuration = 500 // maximum number of days/steps (max radius)
+FireMeanDuration = 200 // days/steps. . Only for duration-based fires (FireModelType = rDurationBasedFire)
+FireMaxDuration = 500 // maximum number of days/steps (max radius)
 
 // ############################################################################ //
 //  Set harvest parameters 
 // ############################################################################ //
 // Area-based harvest
 AreaBasedHarvest = TRUE
-PercentBasedHarvest = TRUE
+PercentBasedHarvest = FALSE
 
 SetManagementZone = 0, 0, 0  // can be three different mgmt types at different times during simulation
 SetManagementZoneSched = 0, 0, 0  // indicates number of years (consecuative) of each mgmt. type listed above.

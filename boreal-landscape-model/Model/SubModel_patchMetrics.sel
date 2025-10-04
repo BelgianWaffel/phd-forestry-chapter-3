@@ -1,4 +1,5 @@
-Seles Model
+/* SelesModel 
+// NPD commented out to run with main model
 // To test stand-along: remove comment on "Seles Model" and any items defined in the main model.
 // To use with main model: comment out "Seles Model" and any items defined in the main model.
 
@@ -7,14 +8,14 @@ Seles Model
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 // Specified in main model, but needed here
-/*
+
 External Variables:
    $cats$ = "..\gisData\cats"
    $inputFiles$ = "..\inputFiles"
-*/
-////////////////////////////////////////////////
-////////////////////////////////////////////////
 
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+*/
 // Define new sub-model events and state below
 
 Landscape Events:
@@ -57,9 +58,7 @@ Global Constants:
    rEffectiveId = 8
 
    rEdge = 1
-   rInterior = 2
-
-   pi = 3.141593
+   rInterior = 2   pi = 3.141593
 
 Global Variables:
    // ###########################################

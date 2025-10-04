@@ -80,13 +80,13 @@ DEFINITIONS
    GLOBAL VARIABLE: SpeciesBySG[], SpeciesLeadBySG[]  // by SppCode/SppLeadCode, SuccessionGroup
    GLOBAL VARIABLE: NumSppTrans[], NumSppTrans2[] // by SppLeadCode, SppLeadCode
 
-   //GLOBAL VARIABLE: HostSppByLU[] 
+   // GLOBAL VARIABLE: HostSppByLU[] 
 
    OUTPUT VARIABLE: tmpFile = "pRelSppFile.txt"
    OUTPUT VARIABLE: tmp2File = "pSppFromTo.txt"
 
    // SBW reporting
-//!!?   OUTPUT VARIABLE: fSBWEvents = SBWEvents.txt
+//!? OUTPUT VARIABLE: fSBWEvents = SBWEvents.txt
 
    GLOBAL VARIABLE: AreaDefoliated, SBWEffectLag, inOutbreak, SBWSchedIndex, SBWSched[], SBWDur[]
 
@@ -286,7 +286,7 @@ INITIALSTATE
 ENDIS
 
 RETURNTIME
-/* //?
+ /*//?
    // #####  SBW REPORTING   
    // ##########################################################################################
 
@@ -1173,7 +1173,7 @@ PROBINIT
             singleTrans [=] GET HEAD(TransTrajectory)
             REMOVE HEAD(TransTrajectory)
             NumTrans = MAX(0,NumTrans - 1)
-            IF (PctCohort2 > 0) //AND (NextTransAge2 > 0) AND (StandAge2 >= NextTransAge2)
+            IF (PctCohort2 > 0) // AND (NextTransAge2 > 0) AND (StandAge2 >= NextTransAge2) 
                prevLead1 = SppLookup[Species,  0]
                prevLead2 = SppLookup[Species2, 0]
                SppInv = IF PctCohort2 > 50 THEN SppCombine[prevLead2,prevLead1] 
@@ -1232,14 +1232,14 @@ PROBINIT
 
                AU = MIN(AU + CLAMP(SppLookup[SppInv,3],0,10), MaxAU)
 
-               //  ** I don't really care about tracking this stuff for the second cohort
+               //  ** I don't really care about tracking this stuff for the second cohort // NPD - lets give it a shot!
                // lead2 = SppLookup[Species2, 0]
-               //NumSppTrans2[prevLead2, lead2] = NumSppTrans2[prevLead2, lead2] + 1
-               //NumSppTrans2[0, lead] = NumSppTrans2[0, lead2] + 1
-               //NumSppTrans2[prevLead2, 0] = NumSppTrans2[prevLead2, 0] + 1
+               // NumSppTrans2[prevLead2, lead2] = NumSppTrans2[prevLead2, lead2] + 1
+               // NumSppTrans2[0, lead] = NumSppTrans2[0, lead2] + 1
+               // NumSppTrans2[prevLead2, 0] = NumSppTrans2[prevLead2, 0] + 1
 
                // Set the pre-disturbance age to reflect "age of species shift"
-               //PreDisturbanceAge = StandAge2-1
+               // PreDisturbanceAge = StandAge2-1
 
                // set up next trans
                IF (SIZE(TransTrajectory2) <= 0)
@@ -1288,6 +1288,6 @@ PROBINIT
 ENDPI
 
 
-TRANSITIONS = TRUE
+TRANSITIONS = FALSE
 
 

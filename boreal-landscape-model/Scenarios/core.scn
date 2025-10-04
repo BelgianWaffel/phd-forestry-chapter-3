@@ -5,13 +5,13 @@ SELES Scenario
 // ############################################################################ //
 Scenario: ..\Model\coreInputs.scn
 
-
 // ############################################################################ //
 // Load unique input layers for this scenario
 // Use same format as in coreInputs.scn
 // ############################################################################ //
 
-// none here: use default core spatial inputs
+// none here: use default core spatial inputs - NPD or ->
+ManagementZone = $gisData$\\ManagementZone
 
 // ############################################################################ //
 // Set unique external script variables for this scenario
@@ -24,15 +24,14 @@ $FireEventName$ = FireFBP  // SimpleFire or FireFBP
 
 // Sub-model (add-on) files (will have a .sel extension)
 $SBWSubModel$ = SubModel_SBW       // no spruce budworm or 2nd cohort
-$PatchMetricsSubModel$ = SubModel_0  // no patch metrics
+$PatchMetricsSubModel$ = SubModel_patchMetrics  // no patch metrics //NPD switched to patch metrics
 
 // Set external variables for input tables (will have a .txt extension)
 $SppSuccessionFile$ = SppSuccession //_noSucc
-$SymmetricIncreasFile$ = SymmetricIncrease //_noSucc
+$SymmetricIncreaseFile$ = SymmetricIncrease //_noSucc // NPD - Typo present ('increas') and inconsistent with other files.
 $ContagionFile$ = Contagion //_noSucc
 
 $AACFile$ = AACAreaPct
-
 
 // ############################################################################ //
 // Load model
@@ -41,10 +40,8 @@ $AACFile$ = AACAreaPct
 Model Dimensions: LandUnit
 ..\Model\BLM.sel
 
-
 Minimize Static
 Tile
-
 
 // ############################################################################ //
 // Load core parameter default settings
@@ -58,23 +55,21 @@ Scenario: ..\Model\coreParameterDefaults.scn
 //   Use coreParameterDefaults.scn to see the main parameters (for the full set, look in VLM.sel)
 // ############################################################################ //
 BaseTimestep = 5
+ReportingInterval = -1 //-1 for no output
 
 // Turn off Succession
-ApplySppSuccession = TRUE //TRUE
-
+ApplySppSuccession = TRUE //FALSE
 
 // Set fire parameters
-FireModelType = rSizeBasedFire //rSimpleEmpiricalFire / SizeBased...
+FireModelType = rDurationBasedFire //rSimpleEmpiricalFire / SizeBased...
 
 FireMeanSize = 200 // now means mean duration (mean radius in 100m; 25 gives around 130 year return time)
 FireMeanNumPerDecade = 12
-
 
 //  Set harvest parameters 
 // Area-based harvest
 AreaBasedHarvest = TRUE
 PercentBasedHarvest = TRUE
-
 
 // ############################################################################ //
 // Create output folders

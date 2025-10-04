@@ -10,7 +10,7 @@ External Variables:
 
    // Sub-model file names: used to include "add on" compoents
    $SBWSubModel$ = SubModel_SBW
-   $PatchMetricsSubModel$ = SubModel_0
+   $PatchMetricsSubModel$ = SubModel_patchMetrics
 
    // Landscape event file names
    $FireEventName$ = FireFBP  // SimpleFire or FireFBP
@@ -86,7 +86,6 @@ Spatial Constants:
    NearestRoadSegment
    DistFromExit
 
-
 // ###########################################
 // ## Constants and parameters needed to define bounds for spatial variables and arrays
 // ###########################################
@@ -132,13 +131,12 @@ Global Constants:
    MaxTimeSinceDisturbance = 400
 
    // Number of disturbance types
-   NumDisturbanceAgents = 3  // don't count logging (why?)
+   NumDisturbanceAgents = 5  // don't count logging (why?)  // NPD - I dunno but this was set to 3 and would not allow multiple disturbances - set to 5 it works
    rLogged = 0
    rFire = 1
    rSBW1 = 2
    rSBW2 = 3
    rSBW3 = 4
-
 
 // ###########################################
 // ## Dynamic rasters
@@ -188,9 +186,6 @@ Spatial Variables:
    // Fire
    FBPFuels[11] // ? CAN THIS BE MOVED TO A COMPONENT
    Burnt[MaxTimeSinceDisturbance]
-
-
-
 
 // ###########################################
 // ## General constant values and tables
@@ -283,8 +278,6 @@ Global Constants:
    // For fire model types: simple size (or area) based empirical or duration based
    rSizeBasedFire = 0
    rDurationBasedFire = 1
-  
-
 
 Global Variables:
    // ###########################################
@@ -351,7 +344,7 @@ Global Variables:
 
    ///////// Disturbance /////////////////////////
    // For disturbance level modification. Multiply disturbance parameters by these values. Default: keep same each run
-   FireModelType = rSizeBasedFire // controls whether the model uses simple size-based or duration-based fires
+   FireModelType = rDurationBasedFire // controls whether the model uses simple size-based or duration-based fires
 
    ApplyFireFuelEffect = TRUE // If TRUE, use estimated fuel types to affect initiation and spread
    ApplyFireLandUnitEffect = FALSE // If TRUE, pick initiation points based on MFRI for the land unit
@@ -453,18 +446,18 @@ Global Variables:
 // ###########################################
 // ## Add-on components are defined by including appropriate sub-models
 //SubModel: SubModel_0.sel
-SubModel: $SBWSubModel$.sel
+SubModel: $SBWSubModel$.sel 
 SubModel: $PatchMetricsSubModel$.sel
 
 
-Output Frequency: 10 // Number of time steps between screen refreshes
+Output Frequency: 5 // Number of time steps between screen refreshes
 
 // Used to schedule spatial time series outputs
 Output Model Frequency:
    Burnt Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
-//   Species Freq: ReportingInterval Directory: "cell" Type: grass compressed relative
+   Species Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
    Logged Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
-//   MaxPotBlockSize Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
+   MaxPotBlockSize Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative
 
    // Needed for carbon analysis
    StandAge Freq: ReportingInterval Directory: "cell" Type: GRASS COMPRESSED relative

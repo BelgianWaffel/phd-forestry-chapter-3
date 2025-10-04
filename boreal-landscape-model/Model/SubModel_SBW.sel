@@ -76,8 +76,8 @@ Global Constants:
    // Lookup a leading (col 0) or secondary (col 1) species given an ITG (row)
    VolEffectsLookup = "$inputFiles$\Insects\VolEffects.txt"
 
-   SRDLookup = "$inputFiles$\Insects\SRD_Simple.txt"
-   //SRDLookup = "$inputFiles$\Insects\SRD.txt"
+   SRDLookup = "$inputFiles$\Insects\SRD_Simple.txt" //NPD - switching to full SRD
+   // SRDLookup = "$inputFiles$\Insects\SRD.txt" // NPD - if selected, this will 'shut off' SBW defolation... why?
    NumHost = 9
 
    // ForSBW

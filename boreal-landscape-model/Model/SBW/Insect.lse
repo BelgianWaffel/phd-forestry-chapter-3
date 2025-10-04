@@ -33,6 +33,10 @@ ENDDEF
 INITIALSTATE
   INITIALSTATE = 1
   DispersalDist = MAX((DispersalDist/CellWidth), 1)  // how far does the defoliation front move in a year?  default 1000km (20 000 cellls)
+  OVER REGION WHOLE MAP // NPD - PctDefol was originally undefined in 'SubModel_SBW.sel' -> this ensures its status is null at the initial state
+     DECISION (StudyArea > 0)
+        PctDefol = 0
+  END
 ENDIS
 
    
