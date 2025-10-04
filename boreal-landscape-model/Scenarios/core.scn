@@ -64,7 +64,7 @@ ApplySppSuccession = TRUE //TRUE
 
 
 // Set fire parameters
-FireModelType = rSimpleEmpiricalBasedFire //rSimpleEmpiricalFire / SizeBased...
+FireModelType = rSizeBasedFire //rSimpleEmpiricalFire / SizeBased...
 
 FireMeanSize = 200 // now means mean duration (mean radius in 100m; 25 gives around 130 year return time)
 FireMeanNumPerDecade = 12

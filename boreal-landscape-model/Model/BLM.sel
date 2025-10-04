@@ -9,7 +9,7 @@ External Variables:
    $inputFiles$ = "..\inputFiles"
 
    // Sub-model file names: used to include "add on" compoents
-   $SBWSubModel$ = SubModel_noSBW
+   $SBWSubModel$ = SubModel_SBW
    $PatchMetricsSubModel$ = SubModel_0
 
    // Landscape event file names
@@ -42,7 +42,6 @@ Landscape Events:
 
    // Reporting events
    ReportResults.lse DEBUG
-
 
 
 // ###########################################
@@ -150,8 +149,8 @@ Spatial Variables:
    ManagementZone[NumManagementZones]
 
    ///////// Succession /////////////////////////
-   StandAge[MaxStandAge] <- initialAge
-   PreDisturbanceAge[MaxStandAge] <- initialAge
+   StandAge[-1, MaxStandAge] <- initialAge
+   PreDisturbanceAge[-1, MaxStandAge] <- initialAge
 
    Species[NumSppCodes] <- initialSpp 
    PreDisturbanceSpp[NumSppCodes] <- initialSpp
@@ -178,8 +177,8 @@ Spatial Variables:
    BlockId[100]
 
    ///////// Roading /////////////////////////
-   RoadType[NumRoadTypes] <- initialRoadType
-   Dist2ActiveRds[MaxDist2ActiveRds] <- initialDist2ActiveRds
+   RoadType[-1, NumRoadTypes] <- initialRoadType
+   Dist2ActiveRds[-1, MaxDist2ActiveRds] <- initialDist2ActiveRds
    NearestRoadLoc[NumCells] <- initialNearestRoadLoc
    Visited[NumRoadSegments] // OR? [3]
 
